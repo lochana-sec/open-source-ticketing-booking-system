@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<info>
+	<infoitem key="UD_rs1" value="name:drama_id;datatype:int,name:drama_name;datatype:string,name:drama_cat;datatype:string,name:performing;datatype:blob,name:intro_year;datatype:int,name:language;datatype:string,name:country;datatype:string,name:image;datatype:string" />
+	<infoitem key="UD_Recordset1" value="name:drama_id;datatype:int,name:drama_name;datatype:string,name:drama_cat;datatype:string,name:performing;datatype:blob,name:drama_des;datatype:blob,name:intro_year;datatype:int,name:audio_clip;datatype:string,name:video_clip;datatype:string,name:language;datatype:string,name:country;datatype:string,name:user_id;datatype:int,name:image;datatype:string,name:doa;datatype:date" />
+</info>

@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<!-- saved from url=(0023)chrome://history-frame/ -->
+<html i18n-values="dir:textdirection;" dir="ltr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+
+<title i18n-content="title">History</title>
+<link rel="stylesheet" href="chrome://resources/css/butter_bar.css">
+<link rel="stylesheet" href="chrome://resources/css/chrome_shared.css">
+<link rel="stylesheet" href="chrome://resources/css/menu.css">
+<link rel="stylesheet" href="chrome://resources/css/menu_button.css">
+<style>/* Copyright 2013 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file. */
+
+.overlay .page .button-strip > button {
+  min-width: 7em;
+}
+
+.overlay {
+  z-index: 4;
+}
+
+#alertOverlayMessage {
+  width: 400px;
+}
+
+#alertOverlayMessage {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}</style>
+<link rel="stylesheet" href="chrome://resources/css/overlay.css">
+<link rel="stylesheet" href="chrome://resources/css/spinner.css">
+<style>/* Copyright (c) 2012 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file. */
+
+body {
+  -webkit-margin-start: 23px;
+  color: rgb(48, 57, 66);
+}
+
+body.uber-frame {
+  -webkit-margin-start: 155px;
+}
+
+html[dir='rtl'] body.uber-frame {
+  /* Enable vertical scrollbar at all times in RTL to avoid visual glitches when
+   * showing sub-pages that vertically overflow. */
+  overflow-y: scroll;
+}
+
+/* TODO(dbeam): Remove .page class from overlays in settings so the junk below
+ * isn't necessary. */
+body #extension-settings.page,
+body #mainview-content .page,
+body .subpage-sheet-container .page,
+body > .page {
+  -webkit-margin-end: 24px;
+  min-width: 576px;
+  padding-bottom: 20px;
+  padding-top: 55px;
+}
+
+body header {
+  background-image: -webkit-linear-gradient(white,
+                                            white 40%,
+                                            rgba(255, 255, 255, 0.92));
+  left: 23px;
+  /* <section>s in options currently amount to 638px total, broken up into
+   * 600px max-width + 18px -webkit-padding-start + 20px -webkit-margin-end
+   * so we mirror this value here so the headers match width and horizontal
+   * alignment when scrolling sideways.
+   * other-devices.css' .device width depends on this, please keep in sync.
+   */
+  max-width: 738px;
+  min-width: 600px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  /* list.css sets a z-index of up to 2, this is set to 3 to ensure that the
+   * header is in front of the selected list item. */
+  z-index: 3;
+}
+
+body.uber-frame header {
+  left: 155px;
+}
+
+html[dir='rtl'] body header {
+  left: 0;
+  right: 23px;
+}
+
+html[dir='rtl'] body.uber-frame header {
+  right: 155px;
+}
+
+body header > .search-field-container,
+body header > .header-extras,
+body header > button {
+  position: absolute;
+  right: 20px;
+  top: 21px;
+}
+
+html[dir='rtl'] body header > .search-field-container,
+html[dir='rtl'] body header > .header-extras,
+html[dir='rtl'] body header > button {
+  left: 20px;
+  right: auto;
+}
+
+body header input[type='search'],
+body header input[type='text'],
+body header button {
+  margin: 0;
+}
+
+body header > h1 {
+  margin: 0;
+  padding: 21px 0 13px;
+}
+
+/* Create a border under the h1 (but before anything that gets appended
+ * to the end of the header). */
+body header > h1::after {
+  -webkit-margin-end: 20px;
+  background-color: #eee;
+  content: ' ';
+  display: block;
+  height: 1px;
+  position: relative;
+  top: 13px;
+}
+
+body footer {
+  border-top: 1px solid #eee;
+  margin-top: 16px;
+  /* min-width and max-width should match the header */
+  max-width: 638px;
+  min-width: 600px;
+  padding: 8px 0;
+}
+
+/* Sections are used in options pages, help page and history page. This defines
+ * the section metrics to match the header metrics above. */
+body section {
+  -webkit-padding-start: 18px;
+  margin-bottom: 24px;
+  margin-top: 8px;
+  max-width: 600px;
+}
+
+body section:last-of-type {
+  margin-bottom: 0;
+}
+
+body section > h3 {
+  -webkit-margin-start: -18px;
+}
+
+body section > div:only-of-type {
+  -webkit-box-flex: 1;
+}
+
+body .section-header {
+  -webkit-margin-start: -18px;
+  margin-bottom: 0.8em;
+  margin-top: 1.2em;
+}
+
+body .section-header > h3 {
+  display: inline;
+}
+
+/* Styles for a hideable notification banner at the top of a page. */
+.page.showing-banner {
+  margin-top: 45px;
+}
+
+.page-banner {
+  background-color: white;
+  width: 100%;
+  z-index: 2;
+}
+
+.page:not(.showing-banner) .page-banner {
+  display: none;
+}
+
+.page-banner-gradient {
+  background: -webkit-linear-gradient(rgb(255, 242, 183),
+                                      rgb(250, 230, 145));
+  border: 1px solid rgb(201, 189, 141);
+  border-radius: 3px;
+  margin: 9px 9px 0 9px;
+  min-height: 25px;
+}
+
+.page-banner .page-banner-gradient {
+  -webkit-margin-end: 20px;
+  -webkit-margin-start: 0;
+  margin-bottom: 9px;
+}
+
+.page-banner-text {
+  -webkit-padding-end: 8px;
+  -webkit-padding-start: 26px;
+  background-image: url('chrome://theme/IDR_CONTROLLED_SETTING_MANDATORY');
+  background-position: 5px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  display: block;
+  padding-bottom: 8px;
+  padding-top: 8px;
+}
+
+.page-banner.clickable:active .page-banner-text {
+  background: -webkit-linear-gradient(rgb(250, 230, 145),
+                                      rgb(255, 242, 183));
+}
+</style>
+<style>/* Copyright (c) 2012 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file. */
+
+html[dir='rtl'] body.uber-frame > .page {
+  -webkit-margin-end: 0;
+}
+
+body.uber-frame > .page.big-topbar-page {
+  padding-top: 78px;
+}
+
+#top-container {
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+#editing-controls,
+#loading-spinner {
+  white-space: nowrap;
+}
+
+#search-button {
+  margin: 0;
+}
+
+#spinner {
+  position: relative;
+  top: 3px;
+}
+
+#notification-bar {
+  float: right;
+  padding-top: 5px;
+}
+
+html[dir='rtl'] #notification-bar {
+  float: left;
+}
+
+#notification-bar.alone {
+  float: left;
+  margin-top: 12px;
+}
+
+html[dir='rtl'] #notification-bar.alone {
+  float: right;
+}
+
+#filter-controls,
+#top-container,
+#results-display,
+#results-pagination {
+  max-width: 718px;
+}
+
+#filter-controls {
+  margin-bottom: 4px;
+  margin-top: 4px;
+  overflow: auto;
+}
+
+#editing-controls {
+  -webkit-margin-end: 12px;
+  float: left;
+}
+
+html[dir='rtl'] #editing-controls {
+  float: right;
+}
+
+#editing-controls button:first-of-type {
+  -webkit-margin-start: 0;
+}
+
+#filter-controls select {
+  -webkit-margin-end: 0;
+}
+
+#range-next,
+#range-previous {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAALCAYAAABLcGxfAAAAR0lEQVQoz2NgIBfY2thtB2ItUjT8B+LfQDwViEWI1QDD74G4Aog5idUAww+BOBKIGYnVAMP9VLfhMxBXE+MHWCiJUj8eiAUA7cBGL4HvmHMAAAAASUVORK5CYII='),
+                    -webkit-linear-gradient(rgb(241, 241, 241),
+                                            rgb(241, 241, 241) 38%,
+                                            rgb(230, 230, 230));
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 0 2px 2px 0;
+}
+
+#range-next:disabled,
+#range-previous:disabled {
+  /* Change the gradient manually in order to make it look like the other
+   * disabled buttons since you can't set opacity on background images only. */
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAALCAYAAABLcGxfAAAAR0lEQVQoz2NgIBfY2thtB2ItUjT8B+LfQDwViEWI1QDD74G4Aog5idUAww+BOBKIGYnVAMP9VLfhMxBXE+MHWCiJUj8eiAUA7cBGL4HvmHMAAAAASUVORK5CYII='),
+                    -webkit-linear-gradient(rgb(231, 231, 231),
+                                            rgb(231, 231, 231) 38%,
+                                            rgb(220, 220, 220));
+  border-color: rgba(67, 67, 67, 0.5);
+  opacity: 0.5;
+}
+
+html[dir='rtl'] #range-today,
+html[dir='rtl'] #range-previous,
+html[dir='rtl'] #range-next {
+  float: right;
+}
+
+html[dir='rtl'] #range-next,
+#range-previous {
+  -webkit-transform: scalex(-1);
+}
+
+html[dir='rtl'] #range-previous {
+  -webkit-transform: scaleX(1);
+}
+
+#range-today {
+  -webkit-margin-end: 10px;
+}
+
+#range-today,
+#range-previous,
+#range-next {
+  float: left;
+  height: 26px;
+  padding-bottom: 4px;
+  padding-top: 4px;
+}
+
+#range-next {
+  -webkit-margin-start: -1px;
+}
+
+#range-previous {
+  -webkit-margin-end: 0;
+}
+
+#display-filter-controls {
+  float: right;
+}
+
+html[dir='rtl'] #display-filter-controls {
+  float: left;
+}
+
+.display-filter-button {
+  float: left;
+}
+
+html[dir='rtl'] .display-filter-button {
+  float: right;
+}
+
+#display-filter-controls label input[type='radio'] {
+  display: none;
+}
+
+#display-filter-controls label span {
+  -webkit-align-items: flex-start;
+  -webkit-appearance: none;
+  -webkit-user-select: none;
+  background-color: buttonface;
+  background-image: -webkit-linear-gradient(rgb(237, 237, 237),
+                                            rgb(237, 237, 237) 38%,
+                                            rgb(222, 222, 222));
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 0;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08),
+              inset 0 1px 2px rgba(255, 255, 255, 0.75);
+  box-sizing: border-box;
+  color: rgb(68, 68, 68);
+  cursor: default;
+  display: inline-block;
+  letter-spacing: normal;
+  line-height: 2em;
+  margin-left: -1px;
+  margin-right: -1px;
+  min-height: 2em;
+  min-width: 4em;
+  text-align: center;
+  text-indent: 0;
+  text-shadow: 0 1px 0 rgb(240, 240, 240);
+  text-transform: none;
+  vertical-align: middle;
+  word-spacing: normal;
+}
+
+html[dir='rtl'] #display-filter-controls label span.last-button-component,
+#display-filter-controls label span.first-button-component {
+  border-bottom-left-radius: 2px;
+  border-top-left-radius: 2px;
+  margin-left: 0;
+}
+
+html[dir='rtl'] #display-filter-controls label span.first-button-component,
+#display-filter-controls label span.last-button-component {
+  border-bottom-right-radius: 2px;
+  border-top-right-radius: 2px;
+  margin-right: 0;
+}
+
+#display-filter-controls input:checked ~ span {
+  background-image: -webkit-linear-gradient(rgb(185, 185, 185),
+                                            rgb(216, 216, 216) 38%,
+                                            rgb(167, 167, 167));
+  border-left-color: rgb(173, 173, 173);
+  border-right-color: rgb(173, 173, 173);
+}
+
+#results-display {
+  margin: 16px 0 0 0;
+}
+
+.edit-button {
+  -webkit-appearance: none;
+  background: none;
+  border: 0;
+  color: blue; /* -webkit-link makes it purple :'( */
+  cursor: pointer;
+  display: inline-block;
+  font: inherit;
+  padding: 0 9px;
+  text-decoration: underline;
+}
+
+.entry,
+.gap,
+.no-entries,
+.site-entry {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gap {
+  -webkit-border-end: 1px solid rgb(192, 195, 198);
+  height: 14px;
+  margin: 1px 0;
+  width: 45px;
+}
+
+.no-checkboxes .gap {
+  width: 25px;
+}
+
+.entry-box,
+.site-domain-row {
+  -webkit-align-items: center;
+  cursor: default;
+  display: -webkit-flex;
+  /* An odd line-height ensures a consistent baseline on all platforms. */
+  line-height: 1.75em;
+  margin-bottom: 6px;
+  /* The box should be no bigger than its parent. */
+  max-width: 100%;
+  overflow: hidden;
+  padding-bottom: 1px;
+}
+
+.site-domain-wrapper {
+  cursor: pointer;
+  display: -webkit-flex;
+  width: 100%;
+}
+
+.search-results,
+.day-results {
+  margin: 0 0 24px 0;
+  padding: 0;
+}
+
+.site-results {
+  -webkit-transition: height 350ms ease-in-out;
+  clear: left;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.site-results.grouped {
+  -webkit-padding-start: 18px;
+}
+
+.no-checkboxes .site-results.grouped {
+  -webkit-padding-start: 21px;
+}
+
+.month-results {
+  -webkit-padding-start: 0;
+}
+
+html[dir='rtl'] .site-results {
+  clear: both;
+}
+
+h2.timeframe {
+  font-size: 1.5em;
+}
+
+.entry .domain {
+  color: rgb(151, 156, 160);
+  min-width: -webkit-min-content;
+  overflow: hidden;
+  padding-left: 6px;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+
+.site-results .domain {
+  display: none;
+}
+
+html[dir='rtl'] .number-visits {
+  /* This element contains parentheses, which without the unicode-bidi: embed
+   * directive would show up incorrectly (e.g. '(www.google.com (5'). Using
+   * 'embed' makes the engine set the text in the parentheses as LTR even
+   * when the layout is set to RTL, which makes using -webkit-*-start
+   * impossible. So use margins and dir='rtl'.
+   */
+  direction: rtl;
+  unicode-bidi: embed;
+}
+
+.number-visits {
+  color: rgb(151, 156, 160);
+}
+
+.drop-down {
+  margin-top: 1px;
+}
+
+html[dir='rtl'] .entry .title,
+html[dir='rtl'] .site-domain {
+  /* Put the favicon on the right. */
+  background-position-x: right;
+}
+
+.entry .time {
+  color: rgb(151, 156, 160);
+  max-width: 90px;
+  min-width: -webkit-min-content;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry input[type='checkbox'],
+.site-domain-row input[type='checkbox'] {
+  -webkit-margin-end: 6px;
+  line-height: 1em;
+  min-width: 13px;
+  top: 0;
+}
+
+.site-domain-wrapper:hover input[type='checkbox']:not(:focus),
+.site-domain-wrapper input[type='checkbox']:not(:focus):checked,
+.entry-box:hover input[type='checkbox']:not(:focus),
+.entry-box input[type='checkbox']:not(:focus):checked {
+  border-color: rgba(0, 0, 0, .5);
+}
+
+.filter-status {
+  -webkit-margin-start: 10px;
+}
+
+.filter-status > div {
+  -webkit-flex: 0 0 auto;
+  -webkit-transition: background-color 150ms;
+  border-radius: 3px;
+  display: none;
+  font-size: 11px;
+  height: 14px;
+  line-height: 12px;
+  white-space: nowrap;
+}
+
+.filter-status > div.filter-allowed,
+.filter-status > div.filter-blocked,
+.filter-status > div.in-content-pack-active,
+.filter-status > div.in-content-pack-passive,
+.filter-status > div.blocked-visit-active {
+  display: block;
+  margin: 3px 3px 3px 0;
+  padding: 0 4px;
+}
+
+.filter-allowed,
+.in-content-pack-active {
+  background-color: rgb(141, 240, 127);
+  border: 1px solid rgb(33, 190, 33);
+  color: rgb(54, 54, 54);
+}
+
+.filter-blocked {
+  border: 1px solid rgb(207, 207, 207);
+  background-color: rgb(231, 231, 231);
+  color: rgb(54, 54, 54);
+}
+
+.in-content-pack-passive {
+  border: 1px solid rgb(155, 224, 163);
+  background-color: rgb(225, 255, 205);
+  color: rgb(148, 148, 148);
+}
+
+/* TODO(sergiu): If this is the final icon replace it with a separate resource.
+ */
+.blocked-indicator {
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAA1CAYAAADxhu2sAAAKJ0lEQVR4Xt1aWWyU1xVOHquqEmvYGgIG4xmPx+MF26D2oX2p2ocoQolUqQ9VXtoKqalaqVKlVlHa9CEPhYZWiZSmYByM9914A0zYWyVVgS4GjLHBbB7bMx7bMPZgjzk93397ejnMPxm72Gax9Oks99yzfP+duT82L3TtW7qo+PfeJcC3WG/o2rfkHsso200sv81SYhYNT4KAXT2lq2nssJ+mzxQyihy9p3QV8dru552Ad65VrKM4Dz3zl230gPE/ebaI+srXEce8+7wSUHRp/wq6f6pAhnZg9e00fbqAEMONfW0RCViy0JCjXxJp92FQGV6RAGBtpD0Tp+Dg80bAT3H0zZCC7WJDqrXrletwCn72vBCwigmgyRP5GNLgrJH6NFg7xrEXi5eBhDXP+i2AIu8PNafL8GpQIUFLQxD28N49zzoBb+B6wze8DI7h9Jef2IC+Fa4eXA0SvvusEvAiH3+6ezSQ8LQV1EfCSvjudgZAAPDighGwUIl5+Hdv1W5Qx12k9gkBAv1xuFW7EQT8doEe0oIRUID7fOp0gR0Y0MdcfEkJgkSOyyUrCO8RC0HAQn3xFY+0ZcrxVoNbn4KQlHASEBsx7wYl5mTNKxaEgLfwSut2x0+f2cZvgtto8mQR3TteSHc/LXAQPV4EH68V0fRZTZLsxXsEE/CTp52A5QyaOJ6nniIQP7udYicLKfqPn9PM/TA9+jMTC9O9f/4CRIAodRrMu0EeITc3vXJeCZhXRvnODzamS9PqyMf46Y4c3UrxyUFK9hNnEiIcg5OgbwUDzg0S3n9a3wRfv3LgJQzr+qU3yU9/oCWPUv3c4ZiJE4Wu7wl4N0ANbvyNp40AJOs0d/52gWo+yp/5/sbUBPQ35OL7AXsEKs841+BTcAzNs3xczBsBv75Zs4HiuM8dbFeAf/xYAfXV56Yk4BrHjHcWOHkE8TMM0Rk3ql/BKfjN00JA7qX9y/hzu5WbK0KTIhmQBiDg2iwJQKzJIdC5prjW5ZLlOAn5T8OL0MfhVo/5LY+DbZAKWBs/yiegLjUBfbU5OAHYI5AcDJs/1OLBKdj7mO8Gj03Aj/vK19L0aWkQd72ji09sHqqQemdDAMeMMVk6H6TNJb7esrWEHp4UAUsv7ltG0c4AD1tI8QQUOVLWxvl6660JzO4EgACVS/IUKR9qowceZOmTIGB3sGETTZ9SjcIWqYgZOzI7AnprAwkEfBHBA/VpuBV+v9gEvHblwCq6f6LAGVQwBVhdrTkEVKcmACQh1uwrUnnccqOH7k9ewinYsRgEyJ3fEWn3cQMFrpg6+ZBuJA+Vz8NlpyagOhuxyAHIfiUFUmOswwcCjizGLQAC3umvfBnNKdx/WD8BqRE5nE9Xq2dHQKQjX3Iil+iS27Xmjar1hL87LDQBgUv7l9PksTya4kYE94/z+7uR1udIi0g7E1CZkgDEIBb7BY/WEqnqoadLxc67QWAhXoTk6X802LSFm9pKseP5kAmIWSAGEn5+qnnUU+VPTQDHINatRixB1/ZQcwYI+GgO7wZzImBnb9kain2aDzjsxwDY5mnImvIJRjryeLjUJ6Cn0k8j7XmyT2ooG1LBrskvUnfONwFfYdB4RzZNyoAa7M/DMRSZsB5uy6UrFVkpCUBMuD1X50ZeSED5EuugR/SKnufzFth9u3YjTdhGFCZcpOgA9mGo7tkQUOlHrGst+CZS1AbQK3qeLwJevVyykqKdOdwAN9aZC/bRjJKArBloX7gth7rLfSkJQEyoNSdJHqkpPYhf65Ddn6zEKXj1cX8lBgLawoc8FD2ayyRw8hSIcnFtGxluNQTE45NJh5+ZjiEGsbIXdaFDClxq2joSG2r2EHrHDI9DwNvXK16m6JEcBxMo7g5Z5+I5yhY90hqga1VZNPCvsqQEBLuqqLfCRyMt2WqvAHaSXlxrXiv/KmGG/5cAH+78sXY/GFW4x8mBBD8Pb2B04zOItOfQrXo/XdifSRfqv0/nm9+icwasM+q+RxdKfHSTY0bbc1SthNqSW9dW8bDRO2bgQX1z/Q4AAR/eqduEhK64ezigpfIryWsBbiZAIX6y/bVZdLHUS+eLPfT3vRl0bp+HSfHC56wNH8p2Ym1eq0MqnaXVdYzE3alLw7X4IWNOBPzoaulqk+RwjsLdjoBI0cVOEZtDo23ZFG4JULDRT7f5Sd/kgW/VZTn6APt4zQzfgUES8gPiT9WHsnsOrAIJP5wtAV/mBQod8uJOBZwk4+3ZDOjGFp9IiZN12PBrGwhQpDWb8/tpqMkg1Oxnn1/yqRq6ltRJqAXo3qzO+b3yN4UvzYaAXTer1tN4238H4IYF8AHWhi6wa+MuPtFH+IgPtn6Dxi7+iSaDf6UJBvSh9m/ymp/GWqUuEND5TQ5dR/qwUqDs/sr1OAW/S/XX4e/gj5qjbVk01ubHlwiKQAdEV7YFbLVmbZajLPHUg0deo+nJsMsfRSIUPLqDY7DH5JT6Bjavkok9KlvyQMdsmNGNALnzm4N1m9GAg9FWbDTJoENqv0Bs5Vfr4UP8Wa/z0b2BzynZz8TgOcRwrKqlpPLbujauTUmFYH06YUbM6kbAr3oPruEjiGRZNNqSxTogupYAYg0eigXERq4WYw81+qi3zEMz8VhSAh7MxJ2Y4Saf1JIcoiuo/nRd1Y/YkH1la4ln/eWjBHjxn5JCTV5O5qfIIZPUSD8guvJDGl3WVLyyBxt81F3qoWi4JykB0ZE+unzAg1ibT9VREkjo170H6w814gtxGU5CBmaXp//BreqNvMFHI80G0JEAupU+K511G2d1vVf2B+sz6UppBnU1/4AeUDzx6T+IU1fLTicmWJep9rrmtD6BtnVvarablRtAwAdCwNf5Hw6qGHQ1uErqTojA+nSe4cZMulHlpXMfp9PnB3fQYO8pik9NMCZpsO8M/a38dV7bTNcrPByrcqnBNPSAyXvSPQP4RSpmBwFlt2vSeNGwHm7KFMCG30DpEiO6jtF+q+PJXj2YQRf+nE6n/pBGx3anUeeujXT6j2l0nn34/A/UJexzrS1S1xS45lA+zIzZQUB4uMFDIxiInxKkQNvaD2hb+7U0CDUwCTVevpM9/AS20MX9W6irOB06P3k++rWIca+ndXep+/K5+sUXavQQZsd/apgKNXjZ6SVI0QHtg9S2jvOoGNhuuYbrvTRUx0+61kO3qzMc3KnxwJckr5uePE7LL+wbBEyBgM/uVG+SAGlSoGy3GK2LjWES9+j9c/fp3pLsUWvJcwzUbAYBn+EGeLO7ZCU7M/DUIDEAdA3rU+uyTwP+VLaGjtE+1BA9dS0Nm1/n45lBwJsgAKfgvcvFK6i/4hUaqN5MQ4YEAY6n0UUKVEwyf4Zah7TIEKnX51RH+3QeOwdmCtak0/Xy9cSzYvj3GC8IASydF4M9bHczYgwC2CeALT4lAbWmYmWvzaP3K5/YOtbmANzy6Xj3nmMMzLZHXoKA/wDaEEHO16kW0wAAAABJRU5ErkJggg==');
+  background-size: 30%;
+}
+
+.blocked-indicator .title {
+  color: rgb(151, 156, 160);
+}
+
+.entry-box,
+.site-domain-row {
+  -webkit-padding-end: 6px;
+  -webkit-padding-start: 6px;
+  border-radius: 2px;
+}
+
+.active :-webkit-any(.entry-box, .site-domain-row) {
+  background-color: rgba(0, 0, 0, .05);
+}
+
+.entry-box-container {
+  display: -webkit-flex;
+}
+
+.entry .visit-entry {
+  display: -webkit-flex;
+  min-width: 0;
+}
+
+.entry .title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry .visit-entry,
+.site-domain {
+  /* Make room for the favicon. */
+  -webkit-padding-start: 20px;
+
+  /* Control the favicon appearance. */
+  background-position-y: center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+}
+
+html[dir='rtl'] .entry .visit-entry,
+html[dir='rtl'] .site-domain {
+  background-position-x: right;
+}
+
+.site-domain button {
+  color: rgb(48, 57, 66);
+}
+
+.site-domain button:hover {
+  text-decoration: none;
+}
+
+.site-domain-arrow {
+  -webkit-transform: rotate(0);
+  -webkit-transition: -webkit-transform 300ms linear;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAALCAYAAABLcGxfAAAAR0lEQVQoz2NgIBfY2thtB2ItUjT8B+LfQDwViEWI1QDD74G4Aog5idUAww+BOBKIGYnVAMP9VLfhMxBXE+MHWCiJUj8eiAUA7cBGL4HvmHMAAAAASUVORK5CYII=) no-repeat;
+  background-position: 5px 5px;
+  color: rgb(143, 143, 143);
+  height: 21px;
+  margin-right: 2px;
+  opacity: 0.58;
+  text-align: center;
+  width: 21px;
+}
+
+html[dir='rtl'] .site-domain-arrow {
+  -webkit-transform: rotate(180deg);
+}
+
+html .expand .site-domain-arrow {
+  -webkit-transform: rotate(90deg);
+}
+
+.entry .bookmark-section {
+  -webkit-margin-end: 3px;
+  -webkit-margin-start: 8px;
+  background:
+      url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAALCAYAAACprHcmAAABr0lEQVQY02NgQAOFJU96jI1PfA0Kud/DgA8sWfFWMzn16sVZU7P/+/ntu9jW+VoTQ9GcBa9FJ0x9JVrb9C6jvGzr//evZP/nZnX/T818lzFhymvReYveiIIVBgbfri6reva/qOTxf1//5//nzKj5//8/6//+9tD/tvb3/hcUP/6fk//kv6/f7WoGVbVj//u6qv8fOBDxf8/2tP9vXpj9//eT8/+bp3L/d26N+L9/f9j/4tyg/zIyu/4z5BY8ehTg1/Z/5yZFoIlM////5P7/9ws/kOb6/+8b4/8t67j+e3vk/E9Ju/yIYfP2d0rV9a9mSklufb17i8X//3+4/v//DlLM/n/2FOX/4mKTX2fnv5y5Yu1bJbgnvX1vn1q1LBzoBKb/754w/v/7len/3Glq/zW1zp5CCY2d+z7XxSec/f34psr/eVOl/wf4xPyfN032/9VTLP/d3ab/njLjfR1ccVrGi97QkOb/tWWq/83MFvw3NH641s529f/EWIP/ft6x/909H/bCFc+a+7rF2nrbVw+vw1+B4drh63+TaeHSzx3unqe/qmts/lpZ+6QFpA4AtfnoAC8Qt2wAAAAASUVORK5CYII=) no-repeat;
+  display: inline-block;
+  height: 11px;
+  min-width: 15px;
+  visibility: hidden;
+}
+
+.entry .starred {
+  visibility: visible;
+}
+
+.entry .title > a {
+  color: rgb(48, 57, 66);
+  text-decoration: none;
+}
+
+.entry .title > a.to-be-removed {
+  text-decoration: line-through;
+}
+
+.entry .title > a:hover {
+  text-decoration: underline;
+}
+
+.fade-out {
+  -webkit-transition: opacity 200ms;
+  opacity: 0;
+}
+
+button.menu-button.drop-down {
+  -webkit-margin-end: 0;
+  min-width: 12px;
+  top: 0;
+}
+
+#action-menu > [role=menuitem] {
+  line-height: 29px;
+  outline: none;
+}
+
+body:not(.has-results) #results-pagination {
+  display: none;
+}
+
+#older-button {
+  float: right;
+}
+
+html[dir='rtl'] #older-button {
+  float: left;
+}
+
+html[dir='ltr'] #newest-button::before {
+  /* Left-pointing double angle quotation mark followed by '&nbsp;'. */
+  content: '\00AB\A0';
+}
+
+html[dir='rtl'] #newest-button::after {
+  /* '&nbsp;' followed by right-pointing double angle quotation mark. */
+  content: '\A0\00BB';
+}
+
+html[dir='ltr'] #newer-button::before,
+html[dir='rtl'] #older-button::before {
+  /* Single left-pointing angle quotation mark followed by '&nbsp;'. */
+  content: '\2039\A0';
+}
+
+html[dir='ltr'] #older-button::after,
+html[dir='rtl'] #newer-button::after {
+  /* 'nbsp;' followed by single right-pointing angle quotation mark. */
+  content: '\A0\203A';
+}
+
+/* Clear the float to ensure that #results-pagination encloses its children. */
+#results-pagination::after {
+  clear: both;
+  content: '';
+  display: block;
+  height: 0;
+  visibility: hidden;
+}
+
+/* Styles for the action menu of visits that come from other devices, triggered
+   by setting the "data-devicename" attribute of the menu. */
+
+#action-menu[data-devicename]:not([data-devicename='']) {
+  padding-top: 0;
+}
+
+#action-menu[data-devicename]::before {
+  background-color: rgb(245, 245, 245);
+  background-repeat: no-repeat;
+  background-size: 24px;
+  border-bottom: 1px solid rgb(232, 232, 232);
+  color: rgb(151, 156, 160);
+  content: attr(data-devicename);
+  display: block;
+  font-size: 11px;
+  line-height: 29px;
+  margin-bottom: 8px;
+  padding: 0 19px 0 51px;
+}
+
+#action-menu[data-devicename='']::before {
+  display: none;
+}
+
+#action-menu[data-devicetype='laptop']::before {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAAAeElEQVR4Xt3TMQqAMAxA0QidOjkJ9TReQLBCsXiaHqO3jXSU8iWuJWN48IdE9OcMBK6a9Huu+gJJ88pzhuKTmkFcilMxg2OWScUIzrD7tjWCuGxOBQGkMIAUBpDCAFIYQAoDSGHQpTDoD+3ODdy536jApdLFjvGiD/lHGGoQPvaPAAAAAElFTkSuQmCC);
+  background-position: 18px center;
+}
+
+#action-menu[data-devicetype='phone']::before {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAAAh0lEQVR4XqXSQQbDQBxG8T9lKKV01fYsOUV5dJ2zhKHklmGYS3xdlEpqJnzqrX+7FzL7D5CYWNCqhWkPZNQo90FFz/s2RO0D/QLOCBlAYQGOJlBYgIMFuCosoLAAFxMoLMDJBAoLkCzwuCkM0G5370/jMA5fUPsgN8GrDxIzBa0qzKQt8PLBGy34OQHDy2LtAAAAAElFTkSuQmCC);
+  background-position: 14px center;
+  padding-left: 43px;
+}
+
+#action-menu[data-devicetype='tablet']::before {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAQAAABKfvVzAAAAjUlEQVR4Xs3TMQrCQBRF0afgWAgWIojuyFZ4YBBb12ERCAjZZSAwm7iWYzX+6cKtT/N5XzS2VODk3pOpNLn/BYMJNBSQzf1SzzgXQB34gIwJgtcGhcHtjFAYPPaoAbzXKAy6E0Jh8NyhBqAVCoPuiFAYXLcoDMrFIyAb9Bfk1rV+CkgePZtKs0enhf70F8YxJlYCxCPVAAAAAElFTkSuQmCC);
+  background-position: 17px center;
+  padding-left: 49px;
+}
+</style>
+
+<style>/* Copyright (c) 2013 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file. */
+
+.other-devices {
+  width: 718px;  /* Same as history section max-width */
+}
+
+.device {
+  display: inline-block;
+  vertical-align: top;
+  width: 239px;  /* 1/3 of history section max-width of 718px. */
+}
+
+.device h3 {
+  margin-top: 8px;
+  white-space: nowrap;
+}
+
+.device-timestamp {
+  color: rgb(151, 156, 160);
+  font-size: 12px;
+  line-height: 1.2em;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-tab-entry {
+  -webkit-margin-end: 8px;
+  -webkit-margin-start: 0;
+  -webkit-padding-end: 0;
+  -webkit-padding-start: 20px;
+  background: no-repeat 0 50%;
+  background-color: transparent !important;
+  background-size: 16px 16px;
+  box-sizing: border-box;
+  display: block;
+  line-height: 1.5em;
+  margin-bottom: 0.5em;
+  margin-top: 0.5em;
+  max-width: 450px;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-tab-entry:not(:hover),
+.device-tab-entry:not(:focus) {
+  text-decoration: none;
+}
+
+.device-tab-entry:hover,
+.device-tab-entry:focus {
+  text-decoration: underline;
+}
+
+.device-tab-entry:active,
+.device-tab-entry:visited,
+.device-tab-entry:link {
+  color: rgb(48, 57, 66);
+}
+
+.device-show-more-tabs,
+.device-show-more-tabs:active,
+.device-show-more-tabs:visited,
+.device-show-more-tabs:link {
+  color: rgb(151, 156, 160);
+}
+
+.other-devices-bottom {
+  clear: both;
+}
+</style>
+
+<script src="chrome://resources/js/assert.js"></script>
+<script src="chrome://resources/js/event_tracker.js"></script>
+<script src="chrome://resources/js/util.js"></script>
+<script src="chrome://resources/js/cr.js"></script>
+<script src="chrome://resources/js/cr/ui.js"></script>
+<script src="chrome://resources/js/cr/ui/command.js"></script>
+<script src="chrome://resources/js/cr/ui/focus_manager.js"></script>
+<script src="chrome://resources/js/cr/ui/focus_row.js"></script>
+<script src="chrome://resources/js/cr/ui/focus_grid.js"></script>
+<script src="chrome://resources/js/cr/ui/menu_item.js"></script>
+<script src="chrome://resources/js/cr/ui/menu.js"></script>
+<script src="chrome://resources/js/cr/ui/alert_overlay.js"></script>
+<script src="chrome://resources/js/cr/ui/overlay.js"></script>
+<script src="chrome://resources/js/cr/ui/position_util.js"></script>
+<script src="chrome://resources/js/cr/ui/menu_button.js"></script>
+<script src="chrome://resources/js/cr/ui/context_menu_button.js"></script>
+<script src="chrome://resources/js/cr/event_target.js"></script>
+<script src="chrome://resources/js/cr/ui/context_menu_handler.js"></script>
+
+<script src="chrome://resources/js/load_time_data.js"></script>
+<script src="chrome://resources/js/util.js"></script>
+
+<script src="chrome://history-frame/history.js"></script>
+<script src="chrome://history-frame/other_devices.js"></script>
+
+<style id="timeColumnStyle">.entry .time { min-width: 29px; }</style></head>
+
+<body class="uber-frame has-results" i18n-values=".style.fontFamily:fontfamily;.style.fontSize:fontsize" style="font-family: &#39;Segoe UI&#39;, Tahoma, sans-serif; font-size: 75%;">
+
+
+<div id="overlay" class="overlay" hidden="">
+  <div id="alertOverlay" class="page" style="max-height: 570.6px;">
+  <div class="close-button"></div>
+  <h1 id="alertOverlayTitle"></h1>
+  <div class="content-area">
+    <div id="alertOverlayMessage"></div>
+  </div>
+  <div class="action-area">
+    <div class="button-strip">
+      <button id="alertOverlayCancel" type="reset"></button>
+      <button id="alertOverlayOk" type="submit"></button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="history-page" class="page">
+  <div id="scrolling-container">
+    <header style="-webkit-transform: none;">
+      <h1 i18n-content="history">History</h1>
+      <div id="search-form" class="search-field-container">
+        <input type="search" id="search-field" required="">
+        <input type="submit" id="search-button" i18n-values="value:searchButton" value="Search history">
+      </div>
+      <div id="filter-controls" hidden="">
+        <button id="range-today" i18n-content="rangeToday" disabled="">Today</button>
+        <button id="range-previous" i18n-values="alt:rangePrevious" alt="Previous">
+        </button>
+        <button id="range-next" i18n-values="alt:rangeNext" disabled="" alt="Next">
+        </button>
+        <div id="display-filter-controls">
+          <div class="display-filter-button">
+            <label for="timeframe-filter-all">
+              <input id="timeframe-filter-all" type="radio" name="timeframe-filter" value="0" checked="">
+              <span i18n-content="rangeAllTime" class="first-button-component">All</span>
+            </label>
+          </div>
+          <div class="display-filter-button">
+            <label for="timeframe-filter-week">
+              <input id="timeframe-filter-week" type="radio" name="timeframe-filter" value="1">
+              <span i18n-content="rangeWeek">Week</span>
+            </label>
+          </div>
+          <div class="display-filter-button">
+            <label for="timeframe-filter-month">
+              <input id="timeframe-filter-month" type="radio" name="timeframe-filter" value="2">
+              <span i18n-content="rangeMonth" class="last-button-component">Month</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </header>
+<div id="other-devices" class="other-devices"></div>
+    <div id="top-container">
+      <div id="editing-controls">
+        <button id="clear-browsing-data" i18n-content="clearAllHistory">Clear browsing data...</button>
+        <button id="remove-selected" disabled="" i18n-content="removeSelected">Remove selected items</button>
+      </div>
+      <div id="notification-bar" hidden=""></div>
+    </div>
+
+    <div id="results-display"><h3 class="day">Today - Thursday, 20 November 2014</h3><ol class="day-results"><li class="entry active"><div class="entry-box-container"><label class="entry-box" for="checkbox-0"><input type="checkbox" id="checkbox-0" tabindex="0"><div class="time">16:59</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/?ref=logo) 1x);"><div class="title"><a href="https://www.facebook.com/?ref=logo" id="id-0" target="_top" title="Facebook" tabindex="-1">Facebook</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-1"><input type="checkbox" id="checkbox-1" tabindex="-1"><div class="time">16:57</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10201059375379819&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10201059375379819&set=a.2177811558097.121481.1031112805&type=1&theater" id="id-1" target="_top" title="https://www.facebook.com/photo.php?fbid=10201059375379819&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater" tabindex="-1">https://www.facebook.com/photo.php?fbid=10201059375379819&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-2"><input type="checkbox" id="checkbox-2" tabindex="-1"><div class="time">16:56</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10201059376819855&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10201059376819855&set=a.2177811558097.121481.1031112805&type=1&theater" id="id-2" target="_top" title="https://www.facebook.com/photo.php?fbid=10201059376819855&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater" tabindex="-1">https://www.facebook.com/photo.php?fbid=10201059376819855&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-3"><input type="checkbox" id="checkbox-3" tabindex="-1"><div class="time">16:56</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10201059377979884&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10201059377979884&set=a.2177811558097.121481.1031112805&type=1&theater" id="id-3" target="_top" title="https://www.facebook.com/photo.php?fbid=10201059377979884&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater" tabindex="-1">https://www.facebook.com/photo.php?fbid=10201059377979884&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-4"><input type="checkbox" id="checkbox-4" tabindex="-1"><div class="time">16:56</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10201059379059911&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10201059379059911&set=a.2177811558097.121481.1031112805&type=1&theater" id="id-4" target="_top" title="https://www.facebook.com/photo.php?fbid=10201059379059911&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater" tabindex="-1">https://www.facebook.com/photo.php?fbid=10201059379059911&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-5"><input type="checkbox" id="checkbox-5" tabindex="-1"><div class="time">16:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10201059381099962&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10201059381099962&set=a.2177811558097.121481.1031112805&type=1&theater" id="id-5" target="_top" title="https://www.facebook.com/photo.php?fbid=10201059381099962&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater" tabindex="-1">https://www.facebook.com/photo.php?fbid=10201059381099962&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-6"><input type="checkbox" id="checkbox-6" tabindex="-1"><div class="time">16:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/dherath?fref=photo) 1x);"><div class="title"><a href="https://www.facebook.com/dherath?fref=photo" id="id-6" target="_top" title="Daminda Shantha Herath" tabindex="-1">Daminda Shantha Herath</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-7"><input type="checkbox" id="checkbox-7" tabindex="-1"><div class="time">16:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/noyel.susantha.3?fref=jewel) 1x);"><div class="title"><a href="https://www.facebook.com/noyel.susantha.3?fref=jewel" id="id-7" target="_top" title="(3) Noyel Susantha" tabindex="-1">(3) Noyel Susantha</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-8"><input type="checkbox" id="checkbox-8" tabindex="-1"><div class="time">16:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10202373027300296&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10202373027300296&set=a.2177811558097.121481.1031112805&type=1&theater" id="id-8" target="_top" title="https://www.facebook.com/photo.php?fbid=10202373027300296&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater" tabindex="-1">https://www.facebook.com/photo.php?fbid=10202373027300296&amp;set=a.2177811558097.121481.1031112805&amp;type=1&amp;theater</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-9"><input type="checkbox" id="checkbox-9" tabindex="-1"><div class="time">16:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/photo.php?fbid=10152219032879039&amp;set=a.10152219067644039&amp;type=1&amp;theater&amp;notif_t=like) 1x);"><div class="title"><a href="https://www.facebook.com/photo.php?fbid=10152219032879039&set=a.10152219067644039&type=1&theater&notif_t=like" id="id-9" target="_top" title="https://www.facebook.com/photo.php?fbid=10152219032879039&amp;set=a.10152219067644039&amp;type=1&amp;theater&amp;notif_t=like" tabindex="-1">https://www.facebook.com/photo.php?fbid=10152219032879039&amp;set=a.10152219067644039&amp;type=1&amp;theater&amp;notif_t=like</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-10"><input type="checkbox" id="checkbox-10" tabindex="-1"><div class="time">16:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.hirunews.lk/) 1x);"><div class="title"><a href="http://www.hirunews.lk/" id="id-10" target="_top" title="Hiru News Official Web Site|Sri Lanka News|News Sri Lanka|Online English News|Breaking English News|Hiru TV News" tabindex="-1">Hiru News Official Web Site|Sri Lanka News|News Sri Lanka|Online English News|Breaking English News|Hiru TV News</a></div><div class="domain">www.hirunews.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-11"><input type="checkbox" id="checkbox-11" tabindex="-1"><div class="time">16:54</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/sachini.silva.56) 1x);"><div class="title"><a href="https://www.facebook.com/sachini.silva.56" id="id-11" target="_top" title="Sachini Silva" tabindex="-1">Sachini Silva</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-12"><input type="checkbox" id="checkbox-12" tabindex="-1"><div class="time">16:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.hirunews.lk/97505/2-doubts-for-unp) 1x);"><div class="title"><a href="http://www.hirunews.lk/97505/2-doubts-for-unp" id="id-12" target="_top" title="2 doubts for the UNP. - Hiru News - Srilanka&#39;s Number One News Portal" tabindex="-1">2 doubts for the UNP. - Hiru News - Srilanka's Number One News Portal</a></div><div class="domain">www.hirunews.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-13"><input type="checkbox" id="checkbox-13" tabindex="-1"><div class="time">16:49</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.hirunews.lk/97502/british-national-who-illegally-remained-in-country-for-24-years-penalized) 1x);"><div class="title"><a href="http://www.hirunews.lk/97502/british-national-who-illegally-remained-in-country-for-24-years-penalized" id="id-13" target="_top" title="British national who illegally remained in the country for 24 years penalized - Hiru News - Srilanka&#39;s Number One News Portal" tabindex="-1">British national who illegally remained in the country for 24 years penalized - Hiru News - Srilanka's Number One News Portal</a></div><div class="domain">www.hirunews.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-14"><input type="checkbox" id="checkbox-14" tabindex="-1"><div class="time">16:46</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/) 1x);"><div class="title"><a href="https://www.facebook.com/" id="id-14" target="_top" title="Facebook" tabindex="-1">Facebook</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-15"><input type="checkbox" id="checkbox-15" tabindex="-1"><div class="time">16:45</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/php/php_ref_ftp.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/php/php_ref_ftp.asp" id="id-15" target="_top" title="PHP 5 FTP Functions" tabindex="-1">PHP 5 FTP Functions</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-16"><input type="checkbox" id="checkbox-16" tabindex="-1"><div class="time">16:45</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/#/noyel.susantha.3?fref=jewel) 1x);"><div class="title"><a href="https://www.facebook.com/#/noyel.susantha.3?fref=jewel" id="id-16" target="_top" title="Facebook" tabindex="-1">Facebook</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-17"><input type="checkbox" id="checkbox-17" tabindex="-1"><div class="time">15:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/file_handling/appendafile.php) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/file_handling/appendafile.php" id="id-17" target="_top" title="http://localhost:1234/wadsem3/form/file_handling/appendafile.php" tabindex="-1">http://localhost:1234/wadsem3/form/file_handling/appendafile.php</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-18"><input type="checkbox" id="checkbox-18" tabindex="-1"><div class="time">15:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/file_handling/) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/file_handling/" id="id-18" target="_top" title="Index of /wadsem3/form/file_handling" tabindex="-1">Index of /wadsem3/form/file_handling</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-19"><input type="checkbox" id="checkbox-19" tabindex="-1"><div class="time">15:42</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/file_handling/writeafile.php) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/file_handling/writeafile.php" id="id-19" target="_top" title="http://localhost:1234/wadsem3/form/file_handling/writeafile.php" tabindex="-1">http://localhost:1234/wadsem3/form/file_handling/writeafile.php</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-20"><input type="checkbox" id="checkbox-20" tabindex="-1"><div class="time">15:22</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/file_handling/readafile.php) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/file_handling/readafile.php" id="id-20" target="_top" title="http://localhost:1234/wadsem3/form/file_handling/readafile.php" tabindex="-1">http://localhost:1234/wadsem3/form/file_handling/readafile.php</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-21"><input type="checkbox" id="checkbox-21" tabindex="-1"><div class="time">15:10</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/" id="id-21" target="_top" title="Index of /wadsem3/form" tabindex="-1">Index of /wadsem3/form</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-22"><input type="checkbox" id="checkbox-22" tabindex="-1"><div class="time">15:10</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/upload/upload.php) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/upload/upload.php" id="id-22" target="_top" title="Upload Page" tabindex="-1">Upload Page</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-23"><input type="checkbox" id="checkbox-23" tabindex="-1"><div class="time">14:07</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/form/upload/) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/form/upload/" id="id-23" target="_top" title="Index of /wadsem3/form/upload" tabindex="-1">Index of /wadsem3/form/upload</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-24"><input type="checkbox" id="checkbox-24" tabindex="-1"><div class="time">14:07</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wadsem3/) 1x);"><div class="title"><a href="http://localhost:1234/wadsem3/" id="id-24" target="_top" title="Index of /wadsem3" tabindex="-1">Index of /wadsem3</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-25"><input type="checkbox" id="checkbox-25" tabindex="-1"><div class="time">13:57</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/home.html?u=32806436&amp;src_type=tg) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/home.html?u=32806436&src_type=tg" id="id-25" target="_top" title="CoolSocialSearch" tabindex="-1">CoolSocialSearch</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-26"><input type="checkbox" id="checkbox-26" tabindex="-1"><div class="time">13:57</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=tg) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/r2.html?u=32806436&src_type=tg" id="id-26" target="_top" title="http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=tg" tabindex="-1">http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=tg</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-27"><input type="checkbox" id="checkbox-27" tabindex="-1"><div class="time">13:57</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=tg) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/r1.html?u=32806436&src_type=tg" id="id-27" target="_top" title="http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=tg" tabindex="-1">http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=tg</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-28"><input type="checkbox" id="checkbox-28" tabindex="-1"><div class="time">13:57</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://static.flipora.com/websearch.html?ref_type=ihome&amp;src_type=tg&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk) 1x);"><div class="title"><a href="http://static.flipora.com/websearch.html?ref_type=ihome&src_type=tg&tv=7.420&t=7.420&bcb=2014-10-22&u=32806436&h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&d=0&gl=lk" id="id-28" target="_top" title="Web Search" tabindex="-1">Web Search</a></div><div class="domain">static.flipora.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-29"><input type="checkbox" id="checkbox-29" tabindex="-1"><div class="time">13:32</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/php/php_form_url_email.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/php/php_form_url_email.asp" id="id-29" target="_top" title="PHP 5 Forms Validate E-mail and URL" tabindex="-1">PHP 5 Forms Validate E-mail and URL</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-30"><input type="checkbox" id="checkbox-30" tabindex="-1"><div class="time">13:28</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/php/default.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/php/default.asp" id="id-30" target="_top" title="PHP 5 Tutorial" tabindex="-1">PHP 5 Tutorial</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-31"><input type="checkbox" id="checkbox-31" tabindex="-1"><div class="time">13:27</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/sajee.rankiripathirana/posts/10205089868996140?comment_id=10205099465996059&amp;offset=0&amp;total_comments=4&amp;notif_t=feed_comment_reply) 1x);"><div class="title"><a href="https://www.facebook.com/sajee.rankiripathirana/posts/10205089868996140?comment_id=10205099465996059&offset=0&total_comments=4&notif_t=feed_comment_reply" id="id-31" target="_top" title="Finally, both DTD and XML files are error free... - Sajee Eranda Rankiripathirana" tabindex="-1">Finally, both DTD and XML files are error free... - Sajee Eranda Rankiripathirana</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-32"><input type="checkbox" id="checkbox-32" tabindex="-1"><div class="time">13:26</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/) 1x);"><div class="title"><a href="http://www.w3schools.com/" id="id-32" target="_top" title="W3Schools Online Web Tutorials" tabindex="-1">W3Schools Online Web Tutorials</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-33"><input type="checkbox" id="checkbox-33" tabindex="-1"><div class="time">13:25</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/file:///C:/xampp/htdocs/Web/New_Techno/Angular/abc.html) 1x);"><div class="title"><a href="file:///C:/xampp/htdocs/Web/New_Techno/Angular/abc.html" id="id-33" target="_top" title="Untitled Document" tabindex="-1">Untitled Document</a></div><div class="domain">file:</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-34"><input type="checkbox" id="checkbox-34" tabindex="-1"><div class="time">11:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://mamma.com/) 1x);"><div class="title"><a href="https://mamma.com/" id="id-34" target="_top" title="Mamma" tabindex="-1">Mamma</a></div><div class="domain">mamma.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-35"><input type="checkbox" id="checkbox-35" tabindex="-1"><div class="time">11:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;uact=8&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fmamma.com%2F&amp;ei=DYZtVPXyC4LUmgXWi4LYAw&amp;usg=AFQjCNFqJdepZRizN_z6ei6englteUKBkA&amp;sig2=TRrLR-J_SBREoSZegoRhLg&amp;bvm=bv.80185997,d.dGY) 1x);"><div class="title"><a href="https://www.google.lk/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0CBwQFjAA&url=http%3A%2F%2Fmamma.com%2F&ei=DYZtVPXyC4LUmgXWi4LYAw&usg=AFQjCNFqJdepZRizN_z6ei6englteUKBkA&sig2=TRrLR-J_SBREoSZegoRhLg&bvm=bv.80185997,d.dGY" id="id-35" target="_top" title="https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;uact=8&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fmamma.com%2F&amp;ei=DYZtVPXyC4LUmgXWi4LYAw&amp;usg=AFQjCNFqJdepZRizN_z6ei6englteUKBkA&amp;sig2=TRrLR-J_SBREoSZegoRhLg&amp;bvm=bv.80185997,d.dGY" tabindex="-1">https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;uact=8&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fmamma.com%2F&amp;ei=DYZtVPXyC4LUmgXWi4LYAw&amp;usg=AFQjCNFqJdepZRizN_z6ei6englteUKBkA&amp;sig2=TRrLR-J_SBREoSZegoRhLg&amp;bvm=bv.80185997,d.dGY</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-36"><input type="checkbox" id="checkbox-36" tabindex="-1"><div class="time">11:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=Mamma) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=Mamma" id="id-36" target="_top" title="Mamma - Google Search" tabindex="-1">Mamma - Google Search</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-37"><input type="checkbox" id="checkbox-37" tabindex="-1"><div class="time">11:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.galaxy.com/search/gsite?cx=partner-pub-7997125561256657%3Aihfdd571hqo&amp;cof=FORID%3A10&amp;ie=UTF-8&amp;q=Mamma) 1x);"><div class="title"><a href="http://www.galaxy.com/search/gsite?cx=partner-pub-7997125561256657%3Aihfdd571hqo&cof=FORID%3A10&ie=UTF-8&q=Mamma" id="id-37" target="_top" title="Mamma" tabindex="-1">Mamma</a></div><div class="domain">www.galaxy.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-38"><input type="checkbox" id="checkbox-38" tabindex="-1"><div class="time">11:40</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://searchenginewatch.com/article/2066974/Metacrawlers-and-Metasearch-Engines) 1x);"><div class="title"><a href="http://searchenginewatch.com/article/2066974/Metacrawlers-and-Metasearch-Engines" id="id-38" target="_top" title="Metacrawlers and Metasearch Engines - SEW" tabindex="-1">Metacrawlers and Metasearch Engines - SEW</a></div><div class="domain">searchenginewatch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-39"><input type="checkbox" id="checkbox-39" tabindex="-1"><div class="time">11:39</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://mamma.com/result/mamma+meta+seaech+engine/web) 1x);"><div class="title"><a href="https://mamma.com/result/mamma+meta+seaech+engine/web" id="id-39" target="_top" title="Mamma" tabindex="-1">Mamma</a></div><div class="domain">mamma.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-40"><input type="checkbox" id="checkbox-40" tabindex="-1"><div class="time">11:36</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.webcrawler.com/search/web?fcoid=417&amp;fcop=topnav&amp;fpid=2&amp;aid=37f9b305-c3fe-48a4-afb4-311f88d8a2e7&amp;ridx=3&amp;q=galaxy&amp;ql=&amp;ss=t) 1x);"><div class="title"><a href="http://www.webcrawler.com/search/web?fcoid=417&fcop=topnav&fpid=2&aid=37f9b305-c3fe-48a4-afb4-311f88d8a2e7&ridx=3&q=galaxy&ql=&ss=t" id="id-40" target="_top" title="galaxy - Web - WebCrawler" tabindex="-1">galaxy - Web - WebCrawler</a></div><div class="domain">www.webcrawler.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-41"><input type="checkbox" id="checkbox-41" tabindex="-1"><div class="time">11:35</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.galaxy.com/) 1x);"><div class="title"><a href="http://www.galaxy.com/" id="id-41" target="_top" title="Galaxy Directory" tabindex="-1">Galaxy Directory</a></div><div class="domain">www.galaxy.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-42"><input type="checkbox" id="checkbox-42" tabindex="-1"><div class="time">11:35</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.lagalaxy.com/) 1x);"><div class="title"><a href="http://www.lagalaxy.com/" id="id-42" target="_top" title="LA Galaxy" tabindex="-1">LA Galaxy</a></div><div class="domain">www.lagalaxy.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-43"><input type="checkbox" id="checkbox-43" tabindex="-1"><div class="time">11:34</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.webcrawler.com/search/web?fcoid=417&amp;fcop=topnav&amp;fpid=2&amp;aid=37f9b305-c3fe-48a4-afb4-311f88d8a2e7&amp;ridx=2&amp;q=%5Cgalaxy&amp;ql=&amp;ss=t) 1x);"><div class="title"><a href="http://www.webcrawler.com/search/web?fcoid=417&fcop=topnav&fpid=2&aid=37f9b305-c3fe-48a4-afb4-311f88d8a2e7&ridx=2&q=%5Cgalaxy&ql=&ss=t" id="id-43" target="_top" title="\galaxy - Web - WebCrawler" tabindex="-1">\galaxy - Web - WebCrawler</a></div><div class="domain">www.webcrawler.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-44"><input type="checkbox" id="checkbox-44" tabindex="-1"><div class="time">11:34</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.lycos.com/) 1x);"><div class="title"><a href="http://www.lycos.com/" id="id-44" target="_top" title="Lycos.com" tabindex="-1">Lycos.com</a></div><div class="domain">www.lycos.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-45"><input type="checkbox" id="checkbox-45" tabindex="-1"><div class="time">11:34</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.webcrawler.com/search/web?fcoid=417&amp;fcop=topnav&amp;fpid=27&amp;aid=37f9b305-c3fe-48a4-afb4-311f88d8a2e7&amp;ridx=1&amp;q=lycos&amp;ql=&amp;ss=t&amp;topSearchSubmit.x=0&amp;topSearchSubmit.y=0&amp;topSearchSubmit=Search) 1x);"><div class="title"><a href="http://www.webcrawler.com/search/web?fcoid=417&fcop=topnav&fpid=27&aid=37f9b305-c3fe-48a4-afb4-311f88d8a2e7&ridx=1&q=lycos&ql=&ss=t&topSearchSubmit.x=0&topSearchSubmit.y=0&topSearchSubmit=Search" id="id-45" target="_top" title="lycos - Web - WebCrawler" tabindex="-1">lycos - Web - WebCrawler</a></div><div class="domain">www.webcrawler.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-46"><input type="checkbox" id="checkbox-46" tabindex="-1"><div class="time">11:33</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.mamma.com/) 1x);"><div class="title"><a href="https://www.mamma.com/" id="id-46" target="_top" title="Mamma" tabindex="-1">Mamma</a></div><div class="domain">www.mamma.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-47"><input type="checkbox" id="checkbox-47" tabindex="-1"><div class="time">11:33</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://r.search.yahoo.com/_ylt=A0SO8xQ4hG1UMLoAWB9XNyoA;_ylu=X3oDMTExOWpkbnBwBHNlYwNzcgRwb3MDMQRjb2xvA2dxMQR2dGlkA1VJQzFfMQ--/RV=2/RE=1416492219/RO=10/RU=https%3a%2f%2fwww.mamma.com%2f/RK=0/RS=rbX5TGSWY6B6nxYVioQb.EhgtqQ-) 1x);"><div class="title"><a href="http://r.search.yahoo.com/_ylt=A0SO8xQ4hG1UMLoAWB9XNyoA;_ylu=X3oDMTExOWpkbnBwBHNlYwNzcgRwb3MDMQRjb2xvA2dxMQR2dGlkA1VJQzFfMQ--/RV=2/RE=1416492219/RO=10/RU=https%3a%2f%2fwww.mamma.com%2f/RK=0/RS=rbX5TGSWY6B6nxYVioQb.EhgtqQ-" id="id-47" target="_top" title="http://r.search.yahoo.com/_ylt=A0SO8xQ4hG1UMLoAWB9XNyoA;_ylu=X3oDMTExOWpkbnBwBHNlYwNzcgRwb3MDMQRjb2xvA2dxMQR2dGlkA1VJQzFfMQ--/RV=2/RE=1416492219/RO=10/RU=https%3a%2f%2fwww.mamma.com%2f/RK=0/RS=rbX5TGSWY6B6nxYVioQb.EhgtqQ-" tabindex="-1">http://r.search.yahoo.com/_ylt=A0SO8xQ4hG1UMLoAWB9XNyoA;_ylu=X3oDMTExOWpkbnBwBHNlYwNzcgRwb3MDMQRjb2xvA2dxMQR2dGlkA1VJQzFfMQ--/RV=2/RE=1416492219/RO=10/RU=https%3a%2f%2fwww.mamma.com%2f/RK=0/RS=rbX5TGSWY6B6nxYVioQb.EhgtqQ-</a></div><div class="domain">r.search.yahoo.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-48"><input type="checkbox" id="checkbox-48" tabindex="-1"><div class="time">11:33</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://search.yahoo.com/search;_ylt=A0SO8xFTg21UivcAetel87UF;_ylc=X1MDOTU4MTA0NjkEX3IDMgRmcgNhbHRhdmlzdGEEZ3ByaWQDTVAwdi5qeFBUWnFMNjAzR2hZTmszQQRuX3JzbHQDMARuX3N1Z2cDMTAEb3JpZ2luA3NlYXJjaC55YWhvby5jb20EcG9zAzAEcHFzdHIDBHBxc3RybAMEcXN0cmwDNgRxdWVyeQNtYW1tYSAEdF9zdG1wAzE0MTY0NjM0MDg-?p=mamma+&amp;fr=altavista&amp;fr2=sb-top-search&amp;iscqry=) 1x);"><div class="title"><a href="https://search.yahoo.com/search;_ylt=A0SO8xFTg21UivcAetel87UF;_ylc=X1MDOTU4MTA0NjkEX3IDMgRmcgNhbHRhdmlzdGEEZ3ByaWQDTVAwdi5qeFBUWnFMNjAzR2hZTmszQQRuX3JzbHQDMARuX3N1Z2cDMTAEb3JpZ2luA3NlYXJjaC55YWhvby5jb20EcG9zAzAEcHFzdHIDBHBxc3RybAMEcXN0cmwDNgRxdWVyeQNtYW1tYSAEdF9zdG1wAzE0MTY0NjM0MDg-?p=mamma+&fr=altavista&fr2=sb-top-search&iscqry=" id="id-48" target="_top" title="mamma - Yahoo Search Results" tabindex="-1">mamma - Yahoo Search Results</a></div><div class="domain">search.yahoo.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-49"><input type="checkbox" id="checkbox-49" tabindex="-1"><div class="time">11:29</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://search.yahoo.com/?fr=altavista) 1x);"><div class="title"><a href="http://search.yahoo.com/?fr=altavista" id="id-49" target="_top" title="Yahoo Search - Web Search" tabindex="-1">Yahoo Search - Web Search</a></div><div class="domain">search.yahoo.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-50"><input type="checkbox" id="checkbox-50" tabindex="-1"><div class="time">11:29</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;uact=8&amp;sqi=2&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fwww.altavista.com%2F&amp;ei=S4NtVLrOFqK_mwXpw4GgCA&amp;usg=AFQjCNEhmc1evRF20vJNKa-leBpkwShgJQ&amp;sig2=0R0CeeiALsMlRpaR49H7Hw&amp;bvm=bv.80185997,d.dGY) 1x);"><div class="title"><a href="https://www.google.lk/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&sqi=2&ved=0CBwQFjAA&url=http%3A%2F%2Fwww.altavista.com%2F&ei=S4NtVLrOFqK_mwXpw4GgCA&usg=AFQjCNEhmc1evRF20vJNKa-leBpkwShgJQ&sig2=0R0CeeiALsMlRpaR49H7Hw&bvm=bv.80185997,d.dGY" id="id-50" target="_top" title="https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;uact=8&amp;sqi=2&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fwww.altavista.com%2F&amp;ei=S4NtVLrOFqK_mwXpw4GgCA&amp;usg=AFQjCNEhmc1evRF20vJNKa-leBpkwShgJQ&amp;sig2=0R0CeeiALsMlRpaR49H7Hw&amp;bvm=bv.80185997,d.dGY" tabindex="-1">https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=1&amp;cad=rja&amp;uact=8&amp;sqi=2&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fwww.altavista.com%2F&amp;ei=S4NtVLrOFqK_mwXpw4GgCA&amp;usg=AFQjCNEhmc1evRF20vJNKa-leBpkwShgJQ&amp;sig2=0R0CeeiALsMlRpaR49H7Hw&amp;bvm=bv.80185997,d.dGY</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-51"><input type="checkbox" id="checkbox-51" tabindex="-1"><div class="time">11:29</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=altavista) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=altavista" id="id-51" target="_top" title="altavista - Google Search" tabindex="-1">altavista - Google Search</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-52"><input type="checkbox" id="checkbox-52" tabindex="-1"><div class="time">11:29</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl" id="id-52" target="_top" title="Google" tabindex="-1">Google</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-53"><input type="checkbox" id="checkbox-53" tabindex="-1"><div class="time">11:28</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.webcrawler.com/) 1x);"><div class="title"><a href="http://www.webcrawler.com/" id="id-53" target="_top" title="WebCrawler Web Search" tabindex="-1">WebCrawler Web Search</a></div><div class="domain">www.webcrawler.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-54"><input type="checkbox" id="checkbox-54" tabindex="-1"><div class="time">11:28</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=web+crawler) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=web+crawler" id="id-54" target="_top" title="web crawler - Google Search" tabindex="-1">web crawler - Google Search</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-55"><input type="checkbox" id="checkbox-55" tabindex="-1"><div class="time">11:27</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://search.yahoo.com/search;_ylt=AwrBTza3gm1UIiwAPuil87UF?p=altavista&amp;fr=altavista&amp;fr2=sfp&amp;iscqry=) 1x);"><div class="title"><a href="https://search.yahoo.com/search;_ylt=AwrBTza3gm1UIiwAPuil87UF?p=altavista&fr=altavista&fr2=sfp&iscqry=" id="id-55" target="_top" title="altavista - Yahoo Search Results" tabindex="-1">altavista - Yahoo Search Results</a></div><div class="domain">search.yahoo.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-56"><input type="checkbox" id="checkbox-56" tabindex="-1"><div class="time">11:27</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://us.search.yahoo.com/yhs/search?hspart=aztec&amp;hsimp=yhs-default&amp;type=ds_107_476&amp;p=magellen&amp;rnd=1432507370&amp;param1=sid%3D476%3Aaid%3D107%3Aver%3D12692%3Atm%3D264%3Asrc%3Dds%3Alng%3Den%3Aitype%3Da%3Auip%3D2078761683) 1x);"><div class="title"><a href="https://us.search.yahoo.com/yhs/search?hspart=aztec&hsimp=yhs-default&type=ds_107_476&p=magellen&rnd=1432507370&param1=sid%3D476%3Aaid%3D107%3Aver%3D12692%3Atm%3D264%3Asrc%3Dds%3Alng%3Den%3Aitype%3Da%3Auip%3D2078761683" id="id-56" target="_top" title="magellen - Aztec Media Yahoo Search Results" tabindex="-1">magellen - Aztec Media Yahoo Search Results</a></div><div class="domain">us.search.yahoo.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-57"><input type="checkbox" id="checkbox-57" tabindex="-1"><div class="time">11:07</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/home.html?u=32806436&amp;src_type=idle) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/home.html?u=32806436&src_type=idle" id="id-57" target="_top" title="CoolSocialSearch" tabindex="-1">CoolSocialSearch</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-58"><input type="checkbox" id="checkbox-58" tabindex="-1"><div class="time">11:07</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=idle) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/r2.html?u=32806436&src_type=idle" id="id-58" target="_top" title="http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=idle" tabindex="-1">http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=idle</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-59"><input type="checkbox" id="checkbox-59" tabindex="-1"><div class="time">11:07</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=idle) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/r1.html?u=32806436&src_type=idle" id="id-59" target="_top" title="http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=idle" tabindex="-1">http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=idle</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-60"><input type="checkbox" id="checkbox-60" tabindex="-1"><div class="time">11:06</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://static.flipora.com/websearch.html?src_type=idle&amp;ref_type=ihome&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk) 1x);"><div class="title"><a href="http://static.flipora.com/websearch.html?src_type=idle&ref_type=ihome&tv=7.420&t=7.420&bcb=2014-10-22&u=32806436&h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&d=0&gl=lk" id="id-60" target="_top" title="http://static.flipora.com/websearch.html?src_type=idle&amp;ref_type=ihome&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk failed to load" tabindex="-1">http://static.flipora.com/websearch.html?src_type=idle&amp;ref_type=ihome&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk failed to load</a></div><div class="domain">static.flipora.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-61"><input type="checkbox" id="checkbox-61" tabindex="-1"><div class="time">10:37</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://esoft.lk/contact-us/) 1x);"><div class="title"><a href="http://esoft.lk/contact-us/" id="id-61" target="_top" title="ESOFT | Sri Lanka&#39;s largest higher education network" tabindex="-1">ESOFT | Sri Lanka's largest higher education network</a></div><div class="domain">esoft.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-62"><input type="checkbox" id="checkbox-62" tabindex="-1"><div class="time">10:36</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://esoft.lk/) 1x);"><div class="title"><a href="http://esoft.lk/" id="id-62" target="_top" title="ESOFT | Sri Lanka&#39;s largest higher education network" tabindex="-1">ESOFT | Sri Lanka's largest higher education network</a></div><div class="domain">esoft.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-63"><input type="checkbox" id="checkbox-63" tabindex="-1"><div class="time">10:35</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.esoft.lk/computer-studies/bit-ucsc/semester-1/) 1x);"><div class="title"><a href="http://www.esoft.lk/computer-studies/bit-ucsc/semester-1/" id="id-63" target="_top" title="ESOFT" tabindex="-1">ESOFT</a></div><div class="domain">www.esoft.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-64"><input type="checkbox" id="checkbox-64" tabindex="-1"><div class="time">09:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://173.194.120.119/) 1x);"><div class="title"><a href="http://173.194.120.119/" id="id-64" target="_top" title="Google" tabindex="-1">Google</a></div><div class="domain">173.194.120.119</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-65"><input type="checkbox" id="checkbox-65" tabindex="-1"><div class="time">09:51</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://173.194.120.120/) 1x);"><div class="title"><a href="http://173.194.120.120/" id="id-65" target="_top" title="Google" tabindex="-1">Google</a></div><div class="domain">173.194.120.120</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-66"><input type="checkbox" id="checkbox-66" tabindex="-1"><div class="time">09:50</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://141.101.127.78/) 1x);"><div class="title"><a href="http://141.101.127.78/" id="id-66" target="_top" title="Direct IP access not allowed | 141.101.127.78 | CloudFlare" tabindex="-1">Direct IP access not allowed | 141.101.127.78 | CloudFlare</a></div><div class="domain">141.101.127.78</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-67"><input type="checkbox" id="checkbox-67" tabindex="-1"><div class="time">09:32</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/ftp://ftp.gnu.org/) 1x);"><div class="title"><a href="ftp://ftp.gnu.org/" id="id-67" target="_top" title="Index of /" tabindex="-1">Index of /</a></div><div class="domain">ftp.gnu.org</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-68"><input type="checkbox" id="checkbox-68" tabindex="-1"><div class="time">09:31</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.gnu.org/) 1x);"><div class="title"><a href="http://www.gnu.org/" id="id-68" target="_top" title="The GNU Operating System" tabindex="-1">The GNU Operating System</a></div><div class="domain">www.gnu.org</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-69"><input type="checkbox" id="checkbox-69" tabindex="-1"><div class="time">09:29</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://ucsc.cmb.ac.lk/) 1x);"><div class="title"><a href="http://ucsc.cmb.ac.lk/" id="id-69" target="_top" title="Home | University of Colombo School of Computing" tabindex="-1">Home | University of Colombo School of Computing</a></div><div class="domain">ucsc.cmb.ac.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-70"><input type="checkbox" id="checkbox-70" tabindex="-1"><div class="time">09:29</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.bit.lk/) 1x);"><div class="title"><a href="http://www.bit.lk/" id="id-70" target="_top" title="Bachelor of Information Technology | University of Colombo School of Computing" tabindex="-1">Bachelor of Information Technology | University of Colombo School of Computing</a></div><div class="domain">www.bit.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-71"><input type="checkbox" id="checkbox-71" tabindex="-1"><div class="time">09:27</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.default-search.net/?sid=476&amp;aid=107&amp;itype=a&amp;ver=12692&amp;tm=264&amp;src=hmp) 1x);"><div class="title"><a href="http://www.default-search.net/?sid=476&aid=107&itype=a&ver=12692&tm=264&src=hmp" id="id-71" target="_top" title="Search" tabindex="-1">Search</a></div><div class="domain">www.default-search.net</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-72"><input type="checkbox" id="checkbox-72" tabindex="-1"><div class="time">00:14</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.youtube.com/watch?v=26Hk3rVlCgU) 1x);"><div class="title"><a href="https://www.youtube.com/watch?v=26Hk3rVlCgU" id="id-72" target="_top" title="Ada Sanda Yaaya , Rathna Sri Wijesingha - 6 - YouTube" tabindex="-1">Ada Sanda Yaaya , Rathna Sri Wijesingha - 6 - YouTube</a></div><div class="domain">www.youtube.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-73"><input type="checkbox" id="checkbox-73" tabindex="-1"><div class="time">00:13</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.youtube.com/watch?v=r30v1URElys) 1x);"><div class="title"><a href="https://www.youtube.com/watch?v=r30v1URElys" id="id-73" target="_top" title="Ada Sanda Yaaya , Rathna Sri Wijesingha - 4 - YouTube" tabindex="-1">Ada Sanda Yaaya , Rathna Sri Wijesingha - 4 - YouTube</a></div><div class="domain">www.youtube.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-74"><input type="checkbox" id="checkbox-74" tabindex="-1"><div class="time">00:13</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.youtube.com/watch?v=8E7mxWbnND0) 1x);"><div class="title"><a href="https://www.youtube.com/watch?v=8E7mxWbnND0" id="id-74" target="_top" title="Ada Sanda Yaaya , Rathna Sri Wijesingha - 1 - YouTube" tabindex="-1">Ada Sanda Yaaya , Rathna Sri Wijesingha - 1 - YouTube</a></div><div class="domain">www.youtube.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-75"><input type="checkbox" id="checkbox-75" tabindex="-1"><div class="time">00:12</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.youtube.com/results?search_query=rathna+sri+wijeshinha) 1x);"><div class="title"><a href="https://www.youtube.com/results?search_query=rathna+sri+wijeshinha" id="id-75" target="_top" title="rathna sri wijeshinha - YouTube" tabindex="-1">rathna sri wijeshinha - YouTube</a></div><div class="domain">www.youtube.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-76"><input type="checkbox" id="checkbox-76" tabindex="-1"><div class="time">00:11</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.youtube.com/watch?v=jglxDlwgkmU) 1x);"><div class="title"><a href="https://www.youtube.com/watch?v=jglxDlwgkmU" id="id-76" target="_top" title="Rathna Sri Wijesinghe Speech of Controlling Stress - YouTube" tabindex="-1">Rathna Sri Wijesinghe Speech of Controlling Stress - YouTube</a></div><div class="domain">www.youtube.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-77"><input type="checkbox" id="checkbox-77" tabindex="-1"><div class="time">00:11</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.youtube.com/watch?v=ntHuIhtj4ow) 1x);"><div class="title"><a href="https://www.youtube.com/watch?v=ntHuIhtj4ow" id="id-77" target="_top" title="Kapuge -- By Rathna Sri Wijesinghe - YouTube" tabindex="-1">Kapuge -- By Rathna Sri Wijesinghe - YouTube</a></div><div class="domain">www.youtube.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-78"><input type="checkbox" id="checkbox-78" tabindex="-1"><div class="time">00:10</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=rathna+sri+wijesinghe&amp;tbm=vid) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=rathna+sri+wijesinghe&tbm=vid" id="id-78" target="_top" title="Google" tabindex="-1">Google</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-79"><input type="checkbox" id="checkbox-79" tabindex="-1"><div class="time">00:10</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=rathna+sri+wijesinghe) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=rathna+sri+wijesinghe" id="id-79" target="_top" title="rathna sri wijesinghe - Google Search" tabindex="-1">rathna sri wijesinghe - Google Search</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li></ol><h3 class="day">Yesterday - Wednesday, 19 November 2014</h3><ol class="day-results"><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-80"><input type="checkbox" id="checkbox-80" tabindex="-1"><div class="time">22:07</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_tables.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_tables.asp" id="id-80" target="_top" title="Angular Tables" tabindex="-1">Angular Tables</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-81"><input type="checkbox" id="checkbox-81" tabindex="-1"><div class="time">22:06</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_validate) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_validate" id="id-81" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-82"><input type="checkbox" id="checkbox-82" tabindex="-1"><div class="time">22:05</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.lankadeepa.lk/index.php/top_story/276586) 1x);"><div class="title"><a href="http://www.lankadeepa.lk/index.php/top_story/276586" id="id-82" target="_top" title="ලංකාවේ උපන් මිනිහා උඩදි කොළේ ඉරාගනී" tabindex="-1">ලංකාවේ උපන් මිනිහා උඩදි කොළේ ඉරාගනී</a></div><div class="domain">www.lankadeepa.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-83"><input type="checkbox" id="checkbox-83" tabindex="-1"><div class="time">22:02</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/) 1x);"><div class="title"><a href="https://www.facebook.com/" id="id-83" target="_top" title="Facebook" tabindex="-1">Facebook</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-84"><input type="checkbox" id="checkbox-84" tabindex="-1"><div class="time">22:01</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/sajee.rankiripathirana/posts/10205089868996140?comment_id=10205097249740654&amp;notif_t=like) 1x);"><div class="title"><a href="https://www.facebook.com/sajee.rankiripathirana/posts/10205089868996140?comment_id=10205097249740654&notif_t=like" id="id-84" target="_top" title="(2) Facebook" tabindex="-1">(2) Facebook</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-85"><input type="checkbox" id="checkbox-85" tabindex="-1"><div class="time">21:53</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/SamanaliLakshi) 1x);"><div class="title"><a href="https://www.facebook.com/SamanaliLakshi" id="id-85" target="_top" title="Samanali Lakshi Gunathilaka" tabindex="-1">Samanali Lakshi Gunathilaka</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-86"><input type="checkbox" id="checkbox-86" tabindex="-1"><div class="time">21:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/patali.champika?notif_t=fbpage_fan_invite) 1x);"><div class="title"><a href="https://www.facebook.com/patali.champika?notif_t=fbpage_fan_invite" id="id-86" target="_top" title="Patali Champika Ranawaka" tabindex="-1">Patali Champika Ranawaka</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-87"><input type="checkbox" id="checkbox-87" tabindex="-1"><div class="time">21:50</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://offair.nethfm.com/article/8092) 1x);"><div class="title"><a href="http://offair.nethfm.com/article/8092" id="id-87" target="_top" title="Neth Offair" tabindex="-1">Neth Offair</a></div><div class="domain">offair.nethfm.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-88"><input type="checkbox" id="checkbox-88" tabindex="-1"><div class="time">21:47</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://offair.nethfm.com/article/8293) 1x);"><div class="title"><a href="http://offair.nethfm.com/article/8293" id="id-88" target="_top" title="Neth Offair" tabindex="-1">Neth Offair</a></div><div class="domain">offair.nethfm.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-89"><input type="checkbox" id="checkbox-89" tabindex="-1"><div class="time">21:45</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://nodutulokaya1.blogspot.com/2014/10/an-app-that-solves-mathematical.html) 1x);"><div class="title"><a href="http://nodutulokaya1.blogspot.com/2014/10/an-app-that-solves-mathematical.html" id="id-89" target="_top" title="An App That Solves Mathematical Equations Easily - Nodutu Lokaya" tabindex="-1">An App That Solves Mathematical Equations Easily - Nodutu Lokaya</a></div><div class="domain">nodutulokaya1.blogspot.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-90"><input type="checkbox" id="checkbox-90" tabindex="-1"><div class="time">21:44</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://nodutulokaya1.blogspot.com/search/label/Technology) 1x);"><div class="title"><a href="http://nodutulokaya1.blogspot.com/search/label/Technology" id="id-90" target="_top" title="Nodutu Lokaya:" tabindex="-1">Nodutu Lokaya:</a></div><div class="domain">nodutulokaya1.blogspot.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-91"><input type="checkbox" id="checkbox-91" tabindex="-1"><div class="time">21:42</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/groups/dunhinda/949784891716545/?notif_t=group_activity) 1x);"><div class="title"><a href="https://www.facebook.com/groups/dunhinda/949784891716545/?notif_t=group_activity" id="id-91" target="_top" title="Facebook" tabindex="-1">Facebook</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-92"><input type="checkbox" id="checkbox-92" tabindex="-1"><div class="time">21:35</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_validation.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_validation.asp" id="id-92" target="_top" title="Angular Validation" tabindex="-1">Angular Validation</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-93"><input type="checkbox" id="checkbox-93" tabindex="-1"><div class="time">21:34</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_forms.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_forms.asp" id="id-93" target="_top" title="Angular Forms" tabindex="-1">Angular Forms</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-94"><input type="checkbox" id="checkbox-94" tabindex="-1"><div class="time">21:26</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_module_body) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_module_body" id="id-94" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-95"><input type="checkbox" id="checkbox-95" tabindex="-1"><div class="time">21:25</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_module) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_module" id="id-95" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-96"><input type="checkbox" id="checkbox-96" tabindex="-1"><div class="time">21:25</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_mod_controller) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_mod_controller" id="id-96" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-97"><input type="checkbox" id="checkbox-97" tabindex="-1"><div class="time">21:25</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_modules.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_modules.asp" id="id-97" target="_top" title="Angular Modules" tabindex="-1">Angular Modules</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-98"><input type="checkbox" id="checkbox-98" tabindex="-1"><div class="time">21:23</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_note_app) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_note_app" id="id-98" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-99"><input type="checkbox" id="checkbox-99" tabindex="-1"><div class="time">21:23</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_application.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_application.asp" id="id-99" target="_top" title="Angular Application" tabindex="-1">Angular Application</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-100"><input type="checkbox" id="checkbox-100" tabindex="-1"><div class="time">21:12</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/" id="id-100" target="_top" title="AngularJS Tutorial" tabindex="-1">AngularJS Tutorial</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-101"><input type="checkbox" id="checkbox-101" tabindex="-1"><div class="time">21:10</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://nodutulokaya1.blogspot.com/2014/11/elon-musk-warns-about-artificial.html) 1x);"><div class="title"><a href="http://nodutulokaya1.blogspot.com/2014/11/elon-musk-warns-about-artificial.html" id="id-101" target="_top" title="Elon Musk Warns About Artificial Intelligent ! - Nodutu Lokaya" tabindex="-1">Elon Musk Warns About Artificial Intelligent ! - Nodutu Lokaya</a></div><div class="domain">nodutulokaya1.blogspot.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-102"><input type="checkbox" id="checkbox-102" tabindex="-1"><div class="time">21:09</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://l.facebook.com/lsr.php?u=http%3A%2F%2Fnodutulokaya1.blogspot.com%2F2014%2F11%2Felon-musk-warns-about-artificial.html&amp;ext=1416411662&amp;hash=AcmqIaqpTnrpXfonED1n1c6s80F-r_JnZR_mX5q1p8Vp_A) 1x);"><div class="title"><a href="http://l.facebook.com/lsr.php?u=http%3A%2F%2Fnodutulokaya1.blogspot.com%2F2014%2F11%2Felon-musk-warns-about-artificial.html&ext=1416411662&hash=AcmqIaqpTnrpXfonED1n1c6s80F-r_JnZR_mX5q1p8Vp_A" id="id-102" target="_top" title="http://l.facebook.com/lsr.php?u=http%3A%2F%2Fnodutulokaya1.blogspot.com%2F2014%2F11%2Felon-musk-warns-about-artificial.html&amp;ext=1416411662&amp;hash=AcmqIaqpTnrpXfonED1n1c6s80F-r_JnZR_mX5q1p8Vp_A" tabindex="-1">http://l.facebook.com/lsr.php?u=http%3A%2F%2Fnodutulokaya1.blogspot.com%2F2014%2F11%2Felon-musk-warns-about-artificial.html&amp;ext=1416411662&amp;hash=AcmqIaqpTnrpXfonED1n1c6s80F-r_JnZR_mX5q1p8Vp_A</a></div><div class="domain">l.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-103"><input type="checkbox" id="checkbox-103" tabindex="-1"><div class="time">20:57</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/pulasthipw/posts/10152694387324039/?notif_t=tagged_with_story) 1x);"><div class="title"><a href="https://www.facebook.com/pulasthipw/posts/10152694387324039/?notif_t=tagged_with_story" id="id-103" target="_top" title="Hey Daminda Sir, I made you a video to say... - Pulasthi Priyan Wanniarachchi" tabindex="-1">Hey Daminda Sir, I made you a video to say... - Pulasthi Priyan Wanniarachchi</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-104"><input type="checkbox" id="checkbox-104" tabindex="-1"><div class="time">20:55</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/dherath/posts/10152662082559039?notif_t=like) 1x);"><div class="title"><a href="https://www.facebook.com/dherath/posts/10152662082559039?notif_t=like" id="id-104" target="_top" title="Daminda Shantha Herath shared a link. - Daminda Shantha Herath" tabindex="-1">Daminda Shantha Herath shared a link. - Daminda Shantha Herath</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-105"><input type="checkbox" id="checkbox-105" tabindex="-1"><div class="time">20:33</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/groups/dunhinda/949642998397401/?notif_t=group_activity) 1x);"><div class="title"><a href="https://www.facebook.com/groups/dunhinda/949642998397401/?notif_t=group_activity" id="id-105" target="_top" title="We are Sri Lanka" tabindex="-1">We are Sri Lanka</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-106"><input type="checkbox" id="checkbox-106" tabindex="-1"><div class="time">20:31</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.colomboweek.com/index.php/arts/item/78-2014-11-18-03-47-40) 1x);"><div class="title"><a href="http://www.colomboweek.com/index.php/arts/item/78-2014-11-18-03-47-40" id="id-106" target="_top" title="ඕස්ට්‍රේලියාවේ වළං හෝදන මහර" tabindex="-1">ඕස්ට්‍රේලියාවේ වළං හෝදන මහර</a></div><div class="domain">www.colomboweek.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-107"><input type="checkbox" id="checkbox-107" tabindex="-1"><div class="time">18:18</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://static.flipora.com/websearch.html?src_type=idle&amp;ref_type=ihome&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk) 1x);"><div class="title"><a href="http://static.flipora.com/websearch.html?src_type=idle&ref_type=ihome&tv=7.420&t=7.420&bcb=2014-10-22&u=32806436&h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&d=0&gl=lk" id="id-107" target="_top" title="http://static.flipora.com/websearch.html?src_type=idle&amp;ref_type=ihome&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk failed to load" tabindex="-1">http://static.flipora.com/websearch.html?src_type=idle&amp;ref_type=ihome&amp;tv=7.420&amp;t=7.420&amp;bcb=2014-10-22&amp;u=32806436&amp;h=1a_VqMGvJs09BBToN1-ulhMYuQCpXM_4VCIbY8js5uM&amp;d=0&amp;gl=lk failed to load</a></div><div class="domain">static.flipora.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-108"><input type="checkbox" id="checkbox-108" tabindex="-1"><div class="time">17:39</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/file:///C:/xampp/htdocs/Web/New_Techno/JQuery/elegant-sliding-image-gallery-with-jquery/index.html) 1x);"><div class="title"><a href="file:///C:/xampp/htdocs/Web/New_Techno/JQuery/elegant-sliding-image-gallery-with-jquery/index.html" id="id-108" target="_top" title="An Elegant Sliding Image Gallery with jQuery" tabindex="-1">An Elegant Sliding Image Gallery with jQuery</a></div><div class="domain">file:</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-109"><input type="checkbox" id="checkbox-109" tabindex="-1"><div class="time">17:39</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/file:///C:/xampp/htdocs/Web/New_Techno/JQuery/JQueryShow.html) 1x);"><div class="title"><a href="file:///C:/xampp/htdocs/Web/New_Techno/JQuery/JQueryShow.html" id="id-109" target="_top" title="file:///C:/xampp/htdocs/Web/New_Techno/JQuery/JQueryShow.html" tabindex="-1">file:///C:/xampp/htdocs/Web/New_Techno/JQuery/JQueryShow.html</a></div><div class="domain">file:</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-110"><input type="checkbox" id="checkbox-110" tabindex="-1"><div class="time">17:29</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_tables_css) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_tables_css" id="id-110" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-111"><input type="checkbox" id="checkbox-111" tabindex="-1"><div class="time">17:04</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_customers_sql) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_customers_sql" id="id-111" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-112"><input type="checkbox" id="checkbox-112" tabindex="-1"><div class="time">17:04</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_sql.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_sql.asp" id="id-112" target="_top" title="Angular SQL" tabindex="-1">Angular SQL</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-113"><input type="checkbox" id="checkbox-113" tabindex="-1"><div class="time">17:00</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/Web/New_Techno/Angular/ex1.html) 1x);"><div class="title"><a href="http://localhost:1234/Web/New_Techno/Angular/ex1.html" id="id-113" target="_top" title="http://localhost:1234/Web/New_Techno/Angular/ex1.html" tabindex="-1">http://localhost:1234/Web/New_Techno/Angular/ex1.html</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-114"><input type="checkbox" id="checkbox-114" tabindex="-1"><div class="time">16:58</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/home.html?u=32806436&amp;src_type=idle) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/home.html?u=32806436&src_type=idle" id="id-114" target="_top" title="CoolSocialSearch" tabindex="-1">CoolSocialSearch</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-115"><input type="checkbox" id="checkbox-115" tabindex="-1"><div class="time">16:58</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=idle) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/r2.html?u=32806436&src_type=idle" id="id-115" target="_top" title="http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=idle" tabindex="-1">http://www.coolsocialsearch.com/r2.html?u=32806436&amp;src_type=idle</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-116"><input type="checkbox" id="checkbox-116" tabindex="-1"><div class="time">16:58</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=idle) 1x);"><div class="title"><a href="http://www.coolsocialsearch.com/r1.html?u=32806436&src_type=idle" id="id-116" target="_top" title="http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=idle" tabindex="-1">http://www.coolsocialsearch.com/r1.html?u=32806436&amp;src_type=idle</a></div><div class="domain">www.coolsocialsearch.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-117"><input type="checkbox" id="checkbox-117" tabindex="-1"><div class="time">16:46</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.facebook.com/sheffora.fernando/posts/1570701016492348?comment_id=1570802546482195&amp;offset=0&amp;total_comments=1&amp;notif_t=feed_comment) 1x);"><div class="title"><a href="https://www.facebook.com/sheffora.fernando/posts/1570701016492348?comment_id=1570802546482195&offset=0&total_comments=1&notif_t=feed_comment" id="id-117" target="_top" title="Happy Birth Day Sheffora.... :) - Daminda Shantha Herath" tabindex="-1">Happy Birth Day Sheffora.... :) - Daminda Shantha Herath</a></div><div class="domain">www.facebook.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-118"><input type="checkbox" id="checkbox-118" tabindex="-1"><div class="time">16:45</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://getbootstrap.com/getting-started/#download) 1x);"><div class="title"><a href="http://getbootstrap.com/getting-started/#download" id="id-118" target="_top" title="Getting started · Bootstrap" tabindex="-1">Getting started · Bootstrap</a></div><div class="domain">getbootstrap.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-119"><input type="checkbox" id="checkbox-119" tabindex="-1"><div class="time">16:45</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://getbootstrap.com/) 1x);"><div class="title"><a href="http://getbootstrap.com/" id="id-119" target="_top" title="Bootstrap · The world&#39;s most popular mobile-first and responsive front-end framework." tabindex="-1">Bootstrap · The world's most popular mobile-first and responsive front-end framework.</a></div><div class="domain">getbootstrap.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-120"><input type="checkbox" id="checkbox-120" tabindex="-1"><div class="time">16:45</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css) 1x);"><div class="title"><a href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" id="id-120" target="_top" title="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" tabindex="-1">http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css</a></div><div class="domain">maxcdn.bootstrapcdn.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-121"><input type="checkbox" id="checkbox-121" tabindex="-1"><div class="time">16:04</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wbapis/admin/user/usermanagement.php) 1x);"><div class="title"><a href="http://localhost:1234/wbapis/admin/user/usermanagement.php" id="id-121" target="_top" title="WBAPIS" tabindex="-1">WBAPIS</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-122"><input type="checkbox" id="checkbox-122" tabindex="-1"><div class="time">16:04</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wbapis/admin/user/adduserprocess.php) 1x);"><div class="title"><a href="http://localhost:1234/wbapis/admin/user/adduserprocess.php" id="id-122" target="_top" title="http://localhost:1234/wbapis/admin/user/adduserprocess.php" tabindex="-1">http://localhost:1234/wbapis/admin/user/adduserprocess.php</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-123"><input type="checkbox" id="checkbox-123" tabindex="-1"><div class="time">15:53</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/file:///C:/xampp/htdocs/Web/New_Techno/Angular/ex1.html) 1x);"><div class="title"><a href="file:///C:/xampp/htdocs/Web/New_Techno/Angular/ex1.html" id="id-123" target="_top" title="file:///C:/xampp/htdocs/Web/New_Techno/Angular/ex1.html" tabindex="-1">file:///C:/xampp/htdocs/Web/New_Techno/Angular/ex1.html</a></div><div class="domain">file:</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-124"><input type="checkbox" id="checkbox-124" tabindex="-1"><div class="time">15:47</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://php.net/manual/en/function.uniqid.php) 1x);"><div class="title"><a href="http://php.net/manual/en/function.uniqid.php" id="id-124" target="_top" title="PHP: uniqid - Manual" tabindex="-1">PHP: uniqid - Manual</a></div><div class="domain">php.net</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-125"><input type="checkbox" id="checkbox-125" tabindex="-1"><div class="time">15:47</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=2&amp;cad=rja&amp;uact=8&amp;ved=0CC4QFjAB&amp;url=http%3A%2F%2Fphp.net%2Fmanual%2Fen%2Ffunction.uniqid.php&amp;ei=Sm5sVNTPGsyzuQTq6oKIBg&amp;usg=AFQjCNFML47YWhICyr-NralZpk4sx78c7Q&amp;sig2=whFhwWW8vLJy_oZJi7GVRw&amp;bvm=bv.80120444,d.c2E) 1x);"><div class="title"><a href="https://www.google.lk/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&cad=rja&uact=8&ved=0CC4QFjAB&url=http%3A%2F%2Fphp.net%2Fmanual%2Fen%2Ffunction.uniqid.php&ei=Sm5sVNTPGsyzuQTq6oKIBg&usg=AFQjCNFML47YWhICyr-NralZpk4sx78c7Q&sig2=whFhwWW8vLJy_oZJi7GVRw&bvm=bv.80120444,d.c2E" id="id-125" target="_top" title="https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=2&amp;cad=rja&amp;uact=8&amp;ved=0CC4QFjAB&amp;url=http%3A%2F%2Fphp.net%2Fmanual%2Fen%2Ffunction.uniqid.php&amp;ei=Sm5sVNTPGsyzuQTq6oKIBg&amp;usg=AFQjCNFML47YWhICyr-NralZpk4sx78c7Q&amp;sig2=whFhwWW8vLJy_oZJi7GVRw&amp;bvm=bv.80120444,d.c2E" tabindex="-1">https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=2&amp;cad=rja&amp;uact=8&amp;ved=0CC4QFjAB&amp;url=http%3A%2F%2Fphp.net%2Fmanual%2Fen%2Ffunction.uniqid.php&amp;ei=Sm5sVNTPGsyzuQTq6oKIBg&amp;usg=AFQjCNFML47YWhICyr-NralZpk4sx78c7Q&amp;sig2=whFhwWW8vLJy_oZJi7GVRw&amp;bvm=bv.80120444,d.c2E</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-126"><input type="checkbox" id="checkbox-126" tabindex="-1"><div class="time">15:47</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=unique+in+php) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=unique+in+php" id="id-126" target="_top" title="unique in php - Google Search" tabindex="-1">unique in php - Google Search</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-127"><input type="checkbox" id="checkbox-127" tabindex="-1"><div class="time">15:47</div><div class="bookmark-section starred" title="Remove bookmark" tabindex="-1"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl" id="id-127" target="_top" title="Google" tabindex="-1">Google</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-128"><input type="checkbox" id="checkbox-128" tabindex="-1"><div class="time">15:44</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/phpmyadmin/index.php?db=wbapis&amp;table=internaluser&amp;target=sql.php&amp;token=9e7b1bf86b932bbdef779cee63bdc6fa) 1x);"><div class="title"><a href="http://localhost:1234/phpmyadmin/index.php?db=wbapis&table=internaluser&target=sql.php&token=9e7b1bf86b932bbdef779cee63bdc6fa" id="id-128" target="_top" title="phpMyAdmin 3.5.2.2 - localhost:1234" tabindex="-1">phpMyAdmin 3.5.2.2 - localhost:1234</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-129"><input type="checkbox" id="checkbox-129" tabindex="-1"><div class="time">15:44</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/phpmyadmin/sql.php?db=wbapis&amp;token=9e7b1bf86b932bbdef779cee63bdc6fa&amp;table=internaluser&amp;pos=0) 1x);"><div class="title"><a href="http://localhost:1234/phpmyadmin/sql.php?db=wbapis&token=9e7b1bf86b932bbdef779cee63bdc6fa&table=internaluser&pos=0" id="id-129" target="_top" title="phpMyAdmin" tabindex="-1">phpMyAdmin</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-130"><input type="checkbox" id="checkbox-130" tabindex="-1"><div class="time">15:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_myusers) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_myusers" id="id-130" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-131"><input type="checkbox" id="checkbox-131" tabindex="-1"><div class="time">15:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_bootstrap.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_bootstrap.asp" id="id-131" target="_top" title="Angular Bootstrap" tabindex="-1">Angular Bootstrap</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-132"><input type="checkbox" id="checkbox-132" tabindex="-1"><div class="time">15:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=3&amp;cad=rja&amp;uact=8&amp;ved=0CCYQFjAC&amp;url=http%3A%2F%2Fwww.w3schools.com%2Fangular%2Fangular_bootstrap.asp&amp;ei=vWxsVKv-BpGSuASVroKYDQ&amp;usg=AFQjCNGHwkMle75BMogVPWQmqpglwVxgGw&amp;sig2=N7CaEhb7lxqxmVCaQ9zeBw&amp;bvm=bv.80120444,d.c2E) 1x);"><div class="title"><a href="https://www.google.lk/url?sa=t&rct=j&q=&esrc=s&source=web&cd=3&cad=rja&uact=8&ved=0CCYQFjAC&url=http%3A%2F%2Fwww.w3schools.com%2Fangular%2Fangular_bootstrap.asp&ei=vWxsVKv-BpGSuASVroKYDQ&usg=AFQjCNGHwkMle75BMogVPWQmqpglwVxgGw&sig2=N7CaEhb7lxqxmVCaQ9zeBw&bvm=bv.80120444,d.c2E" id="id-132" target="_top" title="https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=3&amp;cad=rja&amp;uact=8&amp;ved=0CCYQFjAC&amp;url=http%3A%2F%2Fwww.w3schools.com%2Fangular%2Fangular_bootstrap.asp&amp;ei=vWxsVKv-BpGSuASVroKYDQ&amp;usg=AFQjCNGHwkMle75BMogVPWQmqpglwVxgGw&amp;sig2=N7CaEhb7lxqxmVCaQ9zeBw&amp;bvm=bv.80120444,d.c2E" tabindex="-1">https://www.google.lk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=3&amp;cad=rja&amp;uact=8&amp;ved=0CCYQFjAC&amp;url=http%3A%2F%2Fwww.w3schools.com%2Fangular%2Fangular_bootstrap.asp&amp;ei=vWxsVKv-BpGSuASVroKYDQ&amp;usg=AFQjCNGHwkMle75BMogVPWQmqpglwVxgGw&amp;sig2=N7CaEhb7lxqxmVCaQ9zeBw&amp;bvm=bv.80120444,d.c2E</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-133"><input type="checkbox" id="checkbox-133" tabindex="-1"><div class="time">15:41</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/https://www.google.lk/?gws_rd=ssl#q=http:%2F%2Fajax.googleapis.com%2Fajax%2Flibs%2Fangularjs%2F1.2.26%2Fangular.min.js) 1x);"><div class="title"><a href="https://www.google.lk/?gws_rd=ssl#q=http:%2F%2Fajax.googleapis.com%2Fajax%2Flibs%2Fangularjs%2F1.2.26%2Fangular.min.js" id="id-133" target="_top" title="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js - Google Search" tabindex="-1">http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js - Google Search</a></div><div class="domain">www.google.lk</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-134"><input type="checkbox" id="checkbox-134" tabindex="-1"><div class="time">15:40</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_tables_ucase) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_tables_ucase" id="id-134" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-135"><input type="checkbox" id="checkbox-135" tabindex="-1"><div class="time">15:40</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/angular_examples.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/angular_examples.asp" id="id-135" target="_top" title="Angular Examples" tabindex="-1">Angular Examples</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-136"><input type="checkbox" id="checkbox-136" tabindex="-1"><div class="time">15:40</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_case_icon) 1x);"><div class="title"><a href="http://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_case_icon" id="id-136" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="gap"></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-137"><input type="checkbox" id="checkbox-137" tabindex="-1"><div class="time">14:04</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/bootstrap/bootstrap_case_buttons.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/bootstrap/bootstrap_case_buttons.asp" id="id-137" target="_top" title="Bootstrap Case Button and Icon" tabindex="-1">Bootstrap Case Button and Icon</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-138"><input type="checkbox" id="checkbox-138" tabindex="-1"><div class="time">14:03</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_form) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_form" id="id-138" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-139"><input type="checkbox" id="checkbox-139" tabindex="-1"><div class="time">14:03</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/tryit.asp?filename=try_ng_tables_orderby) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/tryit.asp?filename=try_ng_tables_orderby" id="id-139" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-140"><input type="checkbox" id="checkbox-140" tabindex="-1"><div class="time">14:01</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/angular/default.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/angular/default.asp" id="id-140" target="_top" title="AngularJS Tutorial" tabindex="-1">AngularJS Tutorial</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-141"><input type="checkbox" id="checkbox-141" tabindex="-1"><div class="time">14:00</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_ref_form) 1x);"><div class="title"><a href="http://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_ref_form" id="id-141" target="_top" title="Tryit Editor v2.2" tabindex="-1">Tryit Editor v2.2</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-142"><input type="checkbox" id="checkbox-142" tabindex="-1"><div class="time">13:59</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/bootstrap/bootstrap_ref_css_forms.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/bootstrap/bootstrap_ref_css_forms.asp" id="id-142" target="_top" title="Bootstrap CSS Forms Reference" tabindex="-1">Bootstrap CSS Forms Reference</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-143"><input type="checkbox" id="checkbox-143" tabindex="-1"><div class="time">13:59</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/bootstrap/default.asp) 1x);"><div class="title"><a href="http://www.w3schools.com/bootstrap/default.asp" id="id-143" target="_top" title="Bootstrap 3 Tutorial" tabindex="-1">Bootstrap 3 Tutorial</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-144"><input type="checkbox" id="checkbox-144" tabindex="-1"><div class="time">13:59</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://www.w3schools.com/) 1x);"><div class="title"><a href="http://www.w3schools.com/" id="id-144" target="_top" title="W3Schools Online Web Tutorials" tabindex="-1">W3Schools Online Web Tutorials</a></div><div class="domain">www.w3schools.com</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-145"><input type="checkbox" id="checkbox-145" tabindex="-1"><div class="time">13:53</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/phpmyadmin/index.php?db=wbapis&amp;token=9e7b1bf86b932bbdef779cee63bdc6fa) 1x);"><div class="title"><a href="http://localhost:1234/phpmyadmin/index.php?db=wbapis&token=9e7b1bf86b932bbdef779cee63bdc6fa" id="id-145" target="_top" title="phpMyAdmin 3.5.2.2 - localhost:1234" tabindex="-1">phpMyAdmin 3.5.2.2 - localhost:1234</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-146"><input type="checkbox" id="checkbox-146" tabindex="-1"><div class="time">13:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/phpmyadmin/index.php?token=9e7b1bf86b932bbdef779cee63bdc6fa) 1x);"><div class="title"><a href="http://localhost:1234/phpmyadmin/index.php?token=9e7b1bf86b932bbdef779cee63bdc6fa" id="id-146" target="_top" title="phpMyAdmin 3.5.2.2 - localhost:1234" tabindex="-1">phpMyAdmin 3.5.2.2 - localhost:1234</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-147"><input type="checkbox" id="checkbox-147" tabindex="-1"><div class="time">13:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/phpmyadmin/) 1x);"><div class="title"><a href="http://localhost:1234/phpmyadmin/" id="id-147" target="_top" title="phpMyAdmin" tabindex="-1">phpMyAdmin</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-148"><input type="checkbox" id="checkbox-148" tabindex="-1"><div class="time">13:52</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/xampp/) 1x);"><div class="title"><a href="http://localhost:1234/xampp/" id="id-148" target="_top" title="XAMPP &lt;?include(&#39;.version&#39;);?&gt;" tabindex="-1">XAMPP &lt;?include('.version');?&gt;</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li><li class="entry"><div class="entry-box-container"><label class="entry-box" for="checkbox-149"><input type="checkbox" id="checkbox-149" tabindex="-1"><div class="time">13:43</div><div class="bookmark-section"></div><div class="visit-entry" style="background-image: -webkit-image-set(url(chrome://favicon/size/16@1x/http://localhost:1234/wbapis/admin/dashboard.php) 1x);"><div class="title"><a href="http://localhost:1234/wbapis/admin/dashboard.php" id="id-149" target="_top" title="WBAPIS" tabindex="-1">WBAPIS</a></div><div class="domain">localhost</div></div><button class="drop-down custom-appearance menu-button" value="Open action menu" title="Actions" menu="#action-menu" aria-haspopup="true" tabindex="-1"></button></label></div></li></ol></div>
+    <div id="loading-spinner" hidden="">
+      <span id="loading">
+        <div id="spinner" class="inline-spinner"></div>
+        <span i18n-content="loading">Loading...</span>
+      </span>
+    </div>
+    <div id="results-pagination">
+      <button id="newest-button" class="link-button" i18n-content="newest" hidden="">Newest</button>
+      <button id="newer-button" class="link-button" i18n-content="newer" hidden="">Newer</button>
+      <button id="older-button" class="link-button" i18n-content="older">Older</button>
+    </div>
+  </div>
+</div>
+
+<menu id="action-menu" hidden="" class="decorated" role="menu">
+  <button id="more-from-site" i18n-content="moreFromSite" class="custom-appearance" role="menuitem">More from this site</button>
+  <button id="remove-visit" i18n-content="removeFromHistory" class="custom-appearance" role="menuitem">Remove from history</button>
+</menu>
+
+<script src="chrome://history-frame/strings.js"></script>
+<script src="chrome://resources/js/i18n_template2.js"></script>
+
+
+<menu class="decorated" role="menu" hidden=""><button class="custom-appearance" role="menuitem">Collapse list</button><button class="custom-appearance" role="menuitem">Expand list</button><button class="custom-appearance" role="menuitem">Open all</button></menu></body></html>
